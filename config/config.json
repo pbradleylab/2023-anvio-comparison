@@ -1,7 +1,7 @@
 {
     "pepfile":"config/pepconfig.yml",
     "dbs":{
-        "gtdb_metadata":"",
+        "gtdb_metadata":"resources/bac120_metadata_r214.tsv.gz",
         "microbeannotator":"",
         "anvio":"",
         "kofamscan":""
