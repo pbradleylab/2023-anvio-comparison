@@ -1,0 +1,25 @@
+description: Schema for running analysis on large amounts of genomes
+imports:
+  - http:/schema.databio.org/pep/2.0.0.yaml
+properties:
+  samples:
+    type: array
+    items:
+      type: object
+      properties:
+        sample_name: 
+          type: string
+          description: "Name Of The Sample"
+        genomes:
+          anyOf:
+            - type: string
+              description: "Fastq files for a sample"
+            - type: array
+              items:
+              type: string
+      required_files:
+        - genomes
+      required:
+        - sample_name
+required:
+  - samples

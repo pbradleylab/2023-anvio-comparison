@@ -1,0 +1,14 @@
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - pandas
+  - seaborn
+  - psutil
+  - blast
+  - scipy
+  - matplotlib
+  - pip:
+    - wget
+    - biopython

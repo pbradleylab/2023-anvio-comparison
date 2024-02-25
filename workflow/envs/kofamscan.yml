@@ -1,0 +1,9 @@
+name: anvio-8
+channels:
+  - defaults
+  - bioconda
+  - conda-forge
+  - anaconda
+dependencies:
+  - hmmer
+  - ruby

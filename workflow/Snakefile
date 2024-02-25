@@ -1,0 +1,13 @@
+from snakemake.utils import min_version
+min_version("6.0")
+
+configfile: "config/config.json"
+pepfile: config["pepfile"]
+
+include: "rules/annotation.smk"
+include: "rules/comparison.smk"
+include: "rules/sample_selection.smk"
+
+rule all:
+    input: 
+        expand(rules.todo.output[0], project=pep.sample_table.project.unique().tolist())
