@@ -10,4 +10,4 @@ include: "rules/sample_selection.smk"
 
 rule all:
     input: 
-        expand(rules.todo.output[0], project=pep.sample_table.project.unique().tolist())
+        rules.parse_gtdb_metadata.output

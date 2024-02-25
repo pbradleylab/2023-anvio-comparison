@@ -1,6 +1,7 @@
 {
     "pepfile":"config/pepconfig.yml",
     "dbs":{
+        "gtdb_metadata":"",
         "microbeannotator":"",
         "anvio":"",
         "kofamscan":""
