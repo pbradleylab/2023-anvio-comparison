@@ -9,7 +9,6 @@ where under 5% were ≤10 contigs were then taken.
 Author: Patrick J. H. Bradley, Kathryn Kanenen
 """
 
-
 rule download_metadata:
     output:
         tsv="resources/bac120_metadata_r214.tsv",
@@ -89,3 +88,15 @@ rule download_genomes_genbank:
         grep "GCA" /tmp/genomes.all > /tmp/genomes.genbank
         ncbi-genome-download -A /tmp/genomes.genbank --section genbank bacteria -F "fasta,protein-fasta" -o $(dirname {output})
         """
+
+rule symlink_genomes:
+    input:
+        genbank=rules.download_genomes_genbank.output,
+        refseq=rules.download_genomes_refseq.output
+    output:directory("resources/genomes/symlink")
+    shell:
+        """
+        ln -s $PWD/{input.genbank} $PWD/{output}
+        ln -s $PWD/{input.refseq} $PWD/{output}
+        """
+

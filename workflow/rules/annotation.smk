@@ -1,5 +1,48 @@
 #include:"sample_selection.smk"
+from os import walk
 
+
+def get_protein_fasta(wildcards):
+    out = []
+    dir = rules.symlink_genomes.output
+    genomes = next(walk(dir), (None, None, []))[2]
+    proteins = [x for x in genomes if x.endswith("protein.faa.gz")]
+    for protein in proteins:
+        out.append(rules.anvio_export_functions.output[1].format(sample=protein))
+    return(out)
+
+def get_protein_fasta(wildcards):
+    out = []
+    dir = rules.symlink_genomes.output
+    genomes = next(walk(dir), (None, None, []))[2]
+    nucleotides = [x for x in genomes if x.endswith("genomic.fna.gz")]
+    for nucleotide in nucleotides:
+        out.append(rules.anvio_export_functions.output[1].format(sample=protien))
+    return(out)
+
+
+rule download_kofams_profile:
+    output: "resources/kofams/profile.tar.gz"
+    shell:
+        """
+        wget -c --no-http-keep-alive ftp://ftp.genome.jp/pub/db/kofam/profiles.tar.gz -O {output}
+        """
+
+rule download_kofams_list:
+    output: "resources/kofams/ko_list.gz"
+    shell:
+        """
+        wget -c --no-http-keep-alive ftp://ftp.genome.jp/pub/db/kofam/ko_list.gz -O {output}
+        """
+
+rule untar_kofams_profile:
+    input: rules.download_kofams_profile.output
+    output: directory("resources/kofams/profiles")
+    shell:
+        """
+        tar -xvzf {input}
+        mv ./profiles $(dirname {output})
+        """
 
 rule anvio_setup_kegg_kofams:
     output:directory("resources/anvio/kofams/")
@@ -10,10 +53,47 @@ rule anvio_setup_kegg_kofams:
         touch {output}
         """
 
-rule anvio_script_reformat:
+rule microbeannotator_db_builder:
+    output: directory("resources/microbeannotator/")
+    conda: "../envs/microbeannotator.yml"
+    params:
+        method="diamond"
+    shell:
+        """
+        microbeannotator_db_builder --light --database {output} -m {params.method} --no_aspera
+        """
+
+rule kofamscan:
     input:
-        refseq=rules.download_genomes_refseq.output,
-        genbank=rules.download_genomes_genbank.output 
+        ko_list=rules.download_kofams_list.output,
+        profiles=rules.untar_kofams_profile.output,
+        faa=rules.symlink_genomes.output
+    output:"results/annotation/kofamscan/{genome}.tsv"
+    shell:
+        """
+        ./exec_annotation -f mapper -p {input.faa} -o {output} {input.faa} -k {input.ko_list}
+        """
+
+rule microbeannotator:
+    input:
+        profile=rules.untar_kofams_profile.output,
+        ko_list=rules.untar_kofams_list.output,
+        db=rules.microbeannotator_db_builder.output,
+        ref=get_protein_fasta
+    output: "results/{project}/annotation/microbeAnnotator/{subsample}/kofam_results/{subsample}.faa.kofam.filt"
+    params:
+        dir=directory("results/{project}/annotation/microbeAnnotator/{subsample}/"),
+        method=config["microbeannotator"]["method"]
+    conda: "../envs/microbeannotator.yml"
+    log: "logs/{project}/annotation/microbeAnnotator/{subsample}.log"
+    shell:
+        """
+        mkdir -p {params.dir}
+        microbeannotator -i {input.ref} -d {input.db} -o {params.dir} -m {params.method} -t {threads} 2> {log}
+        """
+
+rule anvio_script_reformat:
+    input: get_protein_fasta
     output:"results/annotation/anvio/reformat/{genome}.fasta"
     conda:"../envs/anvio.yml"
     params:
