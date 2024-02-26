@@ -1,11 +1,13 @@
 from snakemake.utils import min_version
 min_version("6.0")
 
+include: "rules/sample_selection.smk"
 include: "rules/annotation.smk"
 include: "rules/comparison.smk"
-include: "rules/sample_selection.smk"
+
+(GENOME,SAMPLE)= glob_wildcards("resources/genome/genbank/bacteria/{genome}/{sample}_genomic.fna.gz")
+(GENOME,SAMPLE)= glob_wildcards("resources/genome/genbank/bacteria/{genome}/{sample}_protein.faa.gz")
 
 rule all:
     input: 
-        rules.download_genomes_refseq.output,
-        rules.download_genomes_genbank.output
+        expand(rules.anvio_script_reformat.output, genome=GENOME),

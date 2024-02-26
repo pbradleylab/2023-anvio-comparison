@@ -87,5 +87,5 @@ rule download_genomes_genbank:
         """
         cat {input.low} {input.high} > /tmp/genomes.all
         grep "GCA" /tmp/genomes.all > /tmp/genomes.genbank
-        ncbi-genome-download -A /tmp/genomes.refseq --section genbank bacteria -F "fasta,protein-fasta" -o $(dirname {output})
+        ncbi-genome-download -A /tmp/genomes.genbank --section genbank bacteria -F "fasta,protein-fasta" -o $(dirname {output})
         """
