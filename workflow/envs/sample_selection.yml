@@ -2,6 +2,9 @@ channels:
   - defaults
   - conda-forge
   - bioconda
-  - R
 dependencies:
-  - tidyverse
+  - r-tidyverse
+  - r-optparse
+  - pip
+  - pip:
+    - ncbi-genome-download 

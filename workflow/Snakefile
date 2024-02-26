@@ -1,13 +1,11 @@
 from snakemake.utils import min_version
 min_version("6.0")
 
-configfile: "config/config.json"
-pepfile: config["pepfile"]
-
 include: "rules/annotation.smk"
 include: "rules/comparison.smk"
 include: "rules/sample_selection.smk"
 
 rule all:
     input: 
-        rules.parse_gtdb_metadata.output
+        rules.download_genomes_refseq.output,
+        rules.download_genomes_genbank.output
