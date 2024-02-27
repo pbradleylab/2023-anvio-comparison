@@ -104,6 +104,7 @@ checkpoint process_check:
 
 rule symlink_genomes_fna:
     input:
+        peptable=rules.make_peptable.output,
         genbank=rules.download_genomes_genbank.output,
         refseq=rules.download_genomes_refseq.output
     output:directory("resources/genomes/symlink/{genome}/{genome}.fna.gz"),
@@ -132,4 +133,3 @@ rule symlink_genomes_faa:
             bash -c "ln -s $PWD/{input.refseq}/{wildcards.genome}/*faa.gz $PWD/{output}/{wildcards.genome}.faa.gz"
         fi
         """
-

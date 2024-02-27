@@ -1,5 +1,4 @@
-#include:"sample_selection.smk"
-from os import walk
+include: "sample_selection.smk"
 
 rule download_kofams_profile:
     output: "resources/kofams/profile.tar.gz"

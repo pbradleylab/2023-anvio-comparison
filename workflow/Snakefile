@@ -4,17 +4,18 @@ min_version("6.0")
 configfile: "config/config.json"
 pepfile: config["pepfile"]
 
-include: "rules/sample_selection.smk"
-include: "rules/annotation.smk"
-#include: "rules/comparison.smk"
-
+include: "rules/comparison.smk"
 
 def get_genomes(wildcards):
     out = []
     for sample in pep.sample_table.sample_name.tolist():
         out.append(rules.kofamscan.output[0].format(genome=sample))
-        out.append(rules.microbeannotator.output[0].format(genome=sample))
-        out.append(rules.anvio_export_functions.output[0].format(genome=sample))
+        out.append(rules.anvio_microbeA_diff.output[0].format(genome=sample))
+        out.append(rules.anvio_kofam_diff.output[0].format(genome=sample))
+        out.append(rules.microbeA_kofam_diff.output[0].format(genome=sample))
+        out.append(rules.microbeA_anvio_diff.output[0].format(genome=sample))
+        out.append(rules.kofam_anvio_diff.output[0].format(genome=sample))
+        out.append(rules.kofam_microbeA_diff.output[0].format(genome=sample))
     return out
 
 rule all:
