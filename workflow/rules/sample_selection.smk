@@ -67,33 +67,22 @@ rule make_genomes_list:
 
 rule download_genomes_refseq:
     input:rules.make_genomes_list.output
-    output:directory("resources/genomes/refseq/")
+    output:directory("resources/genomes/refseq/bacteria/")
     conda:"../envs/sample_selection.yml"
     shell:
         """
         cut -f1 {input} | sed 's/.*_G/G/g' | grep 'GCF' > /tmp/genomes.refseq
-        ncbi-genome-download -A /tmp/genomes.refseq --section refseq bacteria -F "fasta,protein-fasta" -o $(dirname {output})
+        ncbi-genome-download -A /tmp/genomes.refseq --section refseq bacteria -F "fasta,protein-fasta" -o $(dirname $(dirname {output}))
         """
 
 rule download_genomes_genbank:
-    input:rules.calculate_subsamples.output
-    output:directory("resources/genomes/genbank/")
+    input:rules.make_genomes_list.output
+    output:directory("resources/genomes/genbank/bacteria/")
     conda:"../envs/sample_selection.yml"
     shell:
         """
         cut -f1 {input} | sed 's/.*_G/G/g' | grep "GCA" > /tmp/genomes.genbank
-        ncbi-genome-download -A /tmp/genomes.genbank --section genbank bacteria -F "fasta,protein-fasta" -o $(dirname {output})
-        """
-
-rule symlink_genomes:
-    input:
-        genbank=rules.download_genomes_genbank.output,
-        refseq=rules.download_genomes_refseq.output
-    output:directory("resources/genomes/symlink/"),
-    shell:
-        """
-        ln -s $PWD/{input.genbank} $PWD/{output.genbank}
-        ln -s $PWD/{input.refseq} $PWD/{output.}
+        ncbi-genome-download -A /tmp/genomes.genbank --section genbank bacteria -F "fasta" -o $(dirname $(dirname {output}))
         """
 
 rule make_peptable:
@@ -103,8 +92,44 @@ rule make_peptable:
         """
         echo "sample_name\tfamily" > {output}
         cut -f17 {input} | sed 's/.*f__//g' | sed 's/;.*//g' > /tmp/make_peptable.family
-        cut -f1 {input} > /tmp/make_peptable.genome
+        cut -f1 {input} | sed 's/.*_G/G/g'> /tmp/make_peptable.genome
         paste /tmp/make_peptable.genome /tmp/make_peptable.family > /tmp/make_peptable.all
         cat /tmp/make_peptable.all >> {output}
+        """
+
+checkpoint process_check:
+    input:rules.make_peptable.output
+    output:"/tmp/process_check.done"
+    shell:"touch {output}"
+
+rule symlink_genomes_fna:
+    input:
+        genbank=rules.download_genomes_genbank.output,
+        refseq=rules.download_genomes_refseq.output
+    output:directory("resources/genomes/symlink/{genome}/{genome}.fna.gz"),
+    shell:
+        """
+        mkdir -p $(dirname {output})
+        if [[ "{wildcards.genome}" == "GCA"* ]]; then
+            bash -c "ln -s $PWD/{input.genbank}/{wildcards.genome}/*fna.gz $PWD/{output}"
+        else
+            bash -c "ln -s $PWD/{input.refseq}/{wildcards.genome}/*fna.gz $PWD/{output}"
+        fi
+        """
+
+rule symlink_genomes_faa:
+    input:
+        genbank=rules.symlink_genomes_fna.output,
+        refseq=rules.download_genomes_refseq.output
+    output:directory("resources/genomes/symlink/{genome}/{genome}.faa.gz"),
+    conda:"../envs/sample_selection.yml"
+    shell:
+        """
+        mkdir -p $(dirname {output})
+        if [[ "{wildcards.genome}" == "GCA"* ]]; then
+            transeq {input.genbank} {output}
+        else
+            bash -c "ln -s $PWD/{input.refseq}/{wildcards.genome}/*faa.gz $PWD/{output}/{wildcards.genome}.faa.gz"
+        fi
         """
 

@@ -1,9 +1,7 @@
-name: kofamscan
 channels:
   - defaults
   - bioconda
   - conda-forge
   - anaconda
 dependencies:
-  - hmmer
-  - ruby
+  - emboss

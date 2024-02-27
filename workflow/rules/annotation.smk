@@ -1,26 +1,6 @@
 #include:"sample_selection.smk"
 from os import walk
 
-
-def get_protein_fasta(wildcards):
-    out = []
-    dir = rules.symlink_genomes.output
-    genomes = next(walk(dir), (None, None, []))[2]
-    proteins = [x for x in genomes if x.endswith("protein.faa.gz")]
-    for protein in proteins:
-        out.append(rules.anvio_export_functions.output[1].format(sample=protein))
-    return(out)
-
-def get_protein_fasta(wildcards):
-    out = []
-    dir = rules.symlink_genomes.output
-    genomes = next(walk(dir), (None, None, []))[2]
-    nucleotides = [x for x in genomes if x.endswith("genomic.fna.gz")]
-    for nucleotide in nucleotides:
-        out.append(rules.anvio_export_functions.output[1].format(sample=protien))
-    return(out)
-
-
 rule download_kofams_profile:
     output: "resources/kofams/profile.tar.gz"
     shell:
@@ -75,28 +55,25 @@ rule kofamscan:
     input:
         ko_list=rules.download_kofams_list.output,
         profiles=rules.untar_kofams_profile.output,
-        faa=rules.symlink_genomes.output
+        faa=rules.symlink_genomes_faa.output
     output:"results/annotation/kofamscan/{genome}.tsv"
     shell:
         """
         ./exec_annotation -f mapper -p {input.faa} -o {output} {input.faa} -k {input.ko_list}
         """
 
-
-
-
 rule microbeannotator:
     input:
         profile=rules.untar_kofams_profile.output,
         ko_list=rules.untar_kofams_list.output,
         db=rules.microbeannotator_db_builder.output,
-        ref=get_protein_fasta
-    output: "results/{project}/annotation/microbeAnnotator/{subsample}/kofam_results/{subsample}.faa.kofam.filt"
+        ref=rules.symlink_genomes_faa.output
+    output: "results/annotation/microbeAnnotator/{genome}/kofam_results/{genome}.faa.kofam.filt"
     params:
-        dir=directory("results/{project}/annotation/microbeAnnotator/{subsample}/"),
+        dir=directory("results/annotation/microbeAnnotator/{genome}/"),
         method="blast"
     conda: "../envs/microbeannotator.yml"
-    log: "logs/{project}/annotation/microbeAnnotator/{subsample}.log"
+    log: "logs/annotation/microbeAnnotator/{genome}.log"
     shell:
         """
         mkdir -p {params.dir}
@@ -104,7 +81,7 @@ rule microbeannotator:
         """
 
 rule anvio_script_reformat:
-    input: get_protein_fasta
+    input: rules.symlink_genomes_fna.output
     output:"results/annotation/anvio/reformat/{genome}.fasta"
     conda:"../envs/anvio.yml"
     params:

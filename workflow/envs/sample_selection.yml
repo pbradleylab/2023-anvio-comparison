@@ -6,6 +6,7 @@ dependencies:
   - r-tidyverse
   - r-optparse
   - pandas
+  - emboss
   - pip
   - pip:
     - ncbi-genome-download 
