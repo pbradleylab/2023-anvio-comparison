@@ -35,6 +35,14 @@ rule download_kofams_list:
         wget -c --no-http-keep-alive ftp://ftp.genome.jp/pub/db/kofam/ko_list.gz -O {output}
         """
 
+rule untar_kofams_list:
+    input: rules.download_kofams_list.output
+    output: "resources/kofams/list/ko_list"
+    shell:
+        """
+        gzip -dv {input} > {output}
+        """
+
 rule untar_kofams_profile:
     input: rules.download_kofams_profile.output
     output: directory("resources/kofams/profiles")
@@ -74,6 +82,9 @@ rule kofamscan:
         ./exec_annotation -f mapper -p {input.faa} -o {output} {input.faa} -k {input.ko_list}
         """
 
+
+
+
 rule microbeannotator:
     input:
         profile=rules.untar_kofams_profile.output,
@@ -83,7 +94,7 @@ rule microbeannotator:
     output: "results/{project}/annotation/microbeAnnotator/{subsample}/kofam_results/{subsample}.faa.kofam.filt"
     params:
         dir=directory("results/{project}/annotation/microbeAnnotator/{subsample}/"),
-        method=config["microbeannotator"]["method"]
+        method="blast"
     conda: "../envs/microbeannotator.yml"
     log: "logs/{project}/annotation/microbeAnnotator/{subsample}.log"
     shell:

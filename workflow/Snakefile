@@ -1,11 +1,16 @@
 from snakemake.utils import min_version
 min_version("6.0")
 
+configfile: "config/config.json"
+pepfile: config["pepfile"]
+
 include: "rules/sample_selection.smk"
-include: "rules/annotation.smk"
-include: "rules/comparison.smk"
+#include: "rules/annotation.smk"
+#include: "rules/comparison.smk"
+
 
 rule all:
-    input: 
-        rules.anvio_export_functions.output,
+    input:
+        rules.make_peptable.output
+        #rules.anvio_export_functions.output,
         #expand(rules.microbeannotator.output, genome=GENOME),

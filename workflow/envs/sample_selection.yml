@@ -5,6 +5,7 @@ channels:
 dependencies:
   - r-tidyverse
   - r-optparse
+  - pandas
   - pip
   - pip:
     - ncbi-genome-download 

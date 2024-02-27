@@ -1,4 +1,5 @@
 {
+    "pepfile":"config/pepconfig.yml",
     "dbs":{
         "microbeannotator":"",
         "anvio":"",

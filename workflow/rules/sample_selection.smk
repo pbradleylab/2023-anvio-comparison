@@ -31,61 +31,57 @@ rule parse_gtdb_metadata:
         Rscript workflow/scripts/parse_gtdb_metadata.R -i "{input}" -c "{output.fc}" -l "{output.glc}" -o "{output.go}"
         """
 
-rule fetch_genomes_high:
-    input: 
-        go=rules.parse_gtdb_metadata.output.go,
-        meta=rules.download_metadata.output.tsv
-    output:"resources/genomes.high"
+rule calculate_subsamples:
+    input:
+        low=rules.parse_gtdb_metadata.output.glc,
+        high=rules.parse_gtdb_metadata.output.go
+    output:"results/genomes/calculate_subsamples/subsamples.tsv"
+    conda:"../envs/sample_selection.yml"
     shell:
         """
-        while read line
-        do
-            family=$(echo $line | cut -d',' -f5)
-            grep $family {input.meta} >> /tmp/fetch_genomes_high.family
-        done < {input.go}
-        cat /tmp/fetch_genomes.family | cut -f1 | sed 's/.*_G/G/g' >> /tmp/fetch_genomes_high.genomes
-        sort -u /tmp/fetch_genomes_high.genomes > {output}
+        cat {input.low} > /tmp/genomes.all
+        sed '1d' {input.high} >> /tmp/genomes.all
+        python3 workflow/scripts/subsample_gtdb.py /tmp/genomes.all {output}
         """
 
-rule fetch_genomes_low:
-    input:
-        glc=rules.parse_gtdb_metadata.output.glc,
+rule make_genomes_list:
+    input: 
+        samples=rules.calculate_subsamples.output,
         meta=rules.download_metadata.output.tsv
-    output:"resources/genomes.low"
+    output:"resources/genomes.selected"
     shell:
         """
         while read line
         do
-            family=$(echo $line | cut -d',' -f5)
-            grep $family {input.meta} >> /tmp/fetch_genomes_low.family
-        done < {input.glc}
-        cat /tmp/fetch_genomes.family | cut -f1 | sed 's/.*_G/G/g' >> /tmp/fetch_genomes_low.genomes
-        sort -u /tmp/fetch_genomes_low.genomes > {output}
+            family=$(echo $line | cut -d',' -f1)
+            grep $family {input.meta} >> /tmp/$family.make_genomes_list
+        done < {input.samples}
+
+        while read line
+        do
+            n=$(echo $line | cut -d',' -f3)
+            family=$(echo $line | cut -d',' -f1)
+            shuf -n $n /tmp/$family.make_genomes_list >> {output}
+        done < {input.samples}
         """
 
 rule download_genomes_refseq:
-    input:
-        low=rules.fetch_genomes_high.output,
-        high=rules.fetch_genomes_low.output
+    input:rules.make_genomes_list.output
     output:directory("resources/genomes/refseq/")
     conda:"../envs/sample_selection.yml"
     shell:
         """
-        cat {input.low} {input.high} > /tmp/genomes.all
-        grep "GCF" /tmp/genomes.all > /tmp/genomes.refseq
+        cut -f1 {input} | sed 's/.*_G/G/g' | grep 'GCF' > /tmp/genomes.refseq
         ncbi-genome-download -A /tmp/genomes.refseq --section refseq bacteria -F "fasta,protein-fasta" -o $(dirname {output})
         """
 
 rule download_genomes_genbank:
-    input:
-        low=rules.fetch_genomes_high.output,
-        high=rules.fetch_genomes_low.output
+    input:rules.calculate_subsamples.output
     output:directory("resources/genomes/genbank/")
     conda:"../envs/sample_selection.yml"
     shell:
         """
-        cat {input.low} {input.high} > /tmp/genomes.all
-        grep "GCA" /tmp/genomes.all > /tmp/genomes.genbank
+        cut -f1 {input} | sed 's/.*_G/G/g' | grep "GCA" > /tmp/genomes.genbank
         ncbi-genome-download -A /tmp/genomes.genbank --section genbank bacteria -F "fasta,protein-fasta" -o $(dirname {output})
         """
 
@@ -93,10 +89,22 @@ rule symlink_genomes:
     input:
         genbank=rules.download_genomes_genbank.output,
         refseq=rules.download_genomes_refseq.output
-    output:directory("resources/genomes/symlink")
+    output:directory("resources/genomes/symlink/"),
     shell:
         """
-        ln -s $PWD/{input.genbank} $PWD/{output}
-        ln -s $PWD/{input.refseq} $PWD/{output}
+        ln -s $PWD/{input.genbank} $PWD/{output.genbank}
+        ln -s $PWD/{input.refseq} $PWD/{output.}
+        """
+
+rule make_peptable:
+    input:rules.make_genomes_list.output
+    output:"config/gtdb_sample_table.tsv"
+    shell:
+        """
+        echo "sample_name\tfamily" > {output}
+        cut -f17 {input} | sed 's/.*f__//g' | sed 's/;.*//g' > /tmp/make_peptable.family
+        cut -f1 {input} > /tmp/make_peptable.genome
+        paste /tmp/make_peptable.genome /tmp/make_peptable.family > /tmp/make_peptable.all
+        cat /tmp/make_peptable.all >> {output}
         """
 
