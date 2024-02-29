@@ -164,26 +164,122 @@ rule anvio_display_metabolism:
         anvi-display-metabolism -c {params.db} 2> {log}
         """
 
-#rule microbeannotator_script_gen_user_module_file:
-#rule microbeannotator_script_gen_user_module_file:
-#rule microbeannotator_setup_user_modules:
-#rule microbeannotator_estimate_metabolism:
-#rule microbeannotator_display_metabolism:
-#rule kofam_generate_enzymes_list:
-#rule kofam_script_gen_user_module_file:
-#    input:
-#    output:
-#    params:
-#       db=rules.anvio_gen_contigs_db.output.db,
-#       name="{genome}",
-#       categorization="User modules; kofam set; {genome} metabolism",
-#       
-#    conda:"../envs/anvio.yml"
-#    log:"logs/annotation/kofam_script_gen_user_module_file/{genome}.log"
-#    shell:
-#        """
-#
-#        """
-#rule kofam_setup_user_modules:
-#rule kofam_estimate_metabolism: --user-modules
-#rule kofam_display_metabolism:
+rule create_enzyme_file_kofam:
+    input:rules.kofamscan.output
+    output:"results/annotation/create_enzyme_file/{genome}.kofam"
+    shell:
+        """
+        echo "enzyme\tsource\torthology" > {output}
+        cut -f1 {input} | sed 's/$/\tkofam/g' >> {output}
+        """
+
+rule create_enzyme_file_microbeannotator:
+    input:rules.microbeannotator.output
+    output:"results/annotation/create_enzyme_file/{genome}.microbeannotator"
+    shell:
+        """
+        echo "enzyme\tsource\torthology" > {output}
+        cut -f1 {input} | sed 's/$/\tkofam/g' >> {output}
+        """
+
+rule microbeannotator_script_gen_user_module_file:
+    input:rules.create_enzyme_file_microbeannotator.output
+    output:"results/annotation/gen_user_module_file/{genome}.microbeannotator"
+    params:
+       name="{genome}",
+       categorization="User modules; kofam set; {genome} metabolism",
+    conda:"../envs/anvio.yml"
+    log:"logs/annotation/microbeannotator_script_gen_user_module_file/{genome}.log"
+    shell:
+        """
+        list=$(cut -f1 {input} | paste -s -d+ -)
+        anvi-script-gen-user-module-file -I {params.name} \
+                  -n “Anvio comparison pathway analysis” \
+                  -c {params.categorization} \
+                  -e {input} \
+                  -d $list” \
+                  -o {output} 2> {log}
+        """
+
+rule kofam_script_gen_user_module_file:
+    input:rules.create_enzyme_file_kofam.output
+    output:"results/annotation/gen_user_module_file/{genome}.kofam"
+    params:
+       name="{genome}",
+       categorization="User modules; kofam set; {genome} metabolism",
+    conda:"../envs/anvio.yml"
+    log:"logs/annotation/kofam_script_gen_user_module_file/{genome}.log"
+    shell:
+        """
+        list=$(cut -f1 {input} | paste -s -d+ -)
+        anvi-script-gen-user-module-file -I {params.name} \
+                  -n “Anvio comparison pathway analysis” \
+                  -c {params.categorization} \
+                  -e {input} \
+                  -d $list” \
+                  -o {output} 2> {log}
+        """
+
+rule microbeannotator_setup_user_modules:
+    input:rules.microbeannotator_script_gen_user_module_file.output
+    output:"results/annotation/microbeannotator_setup_user_modules/{genome}/"
+    conda:"../envs/anvio.yml"
+    log:"logs/annotation/microbeannotator_setup_user_modules/{genome}.log"
+    shell:
+        """
+        anvi-setup-user-modules --user-modules {input} -o {output} 2> {log}
+        """
+
+rule kofam_setup_user_modules:
+    input:rules.kofam_script_gen_user_module_file.output
+    output:"results/annotation/kofam_setup_user_modules/{genome}/"
+    conda:"../envs/anvio.yml"
+    log:"logs/annotation/kofam_setup_user_modules/{genome}.log"
+    shell:
+        """
+        anvi-setup-user-modules --user-modules {input} -o {output} 2> {log}
+        """
+
+rule microbeannotator_estimate_metabolism:
+    input:rules.microbeannotator_setup_user_modules.output
+    output:"results/annotation/microbeannotator_setup_user_modules/{genome}/"
+    params:
+       db=rules.anvio_gen_contigs_db.output.db
+    conda:"../envs/anvio.yml"
+    log:"logs/annotation/microbeannotator_estimate_metabolism/{genome}.log"
+    shell:
+        """
+        anvi-estimate-metabolism -c {params.db} --user-modules {input} 2> {log} 
+        """
+
+rule kofam_estimate_metabolism:
+    input:rules.kofam_setup_user_modules.output
+    output:"results/annotation/kofam_setup_user_modules/{genome}/"
+    params:
+       db=rules.anvio_gen_contigs_db.output.db
+    conda:"../envs/anvio.yml"
+    log:"logs/annotation/kofam_estimate_metabolism/{genome}.log"
+    shell:
+        """
+        anvi-estimate-metabolism -c {params.db} --user-modules {input} 2> {log}
+        """
+
+rule microbeannotator_display_metabolism:
+    input:
+    output:"results/annotation/microbeannotator_display_metabolism/{genome}_met.png"
+    conda:"../envs/anvio.yml"
+    log:"logs/annotation/microbeannotator_display_metabolism/{genome}.log"
+    shell:
+        """
+        anvi-display-metabolism -c {params.db} --file {output} 2> {log}
+        """
+
+rule kofam_display_metabolism:
+    input:
+    output:"results/annotation/kofam_display_metabolism/{genome}_met.png"
+    conda:"../envs/anvio.yml"
+    log:"logs/annotation/kofam_display_metabolism/{genome}.log"
+    shell:
+        """
+        anvi-display-metabolism -c {params.db} --file {output} 2> {log}
+        """

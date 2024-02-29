@@ -1,5 +1,6 @@
 #!env bash
 
+pip install -U git+https://github.com/cruizperez/MicrobeAnnotator@master
 pip install hmmer
 pip install attrs
-pip install -U git+https://github.com/cruizperez/MicrobeAnnotator@main
+pip install dataclasses

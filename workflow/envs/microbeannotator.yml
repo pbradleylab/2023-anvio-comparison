@@ -3,12 +3,15 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
+  - python=3.7
   - pandas
   - seaborn
   - psutil
   - blast
   - scipy
   - matplotlib
+  - hmmer
   - pip:
+    - attrs
     - wget
     - biopython

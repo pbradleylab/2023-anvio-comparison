@@ -10,6 +10,8 @@ def get_genomes(wildcards):
     out = []
     for sample in pep.sample_table.sample_name.tolist():
         out.append(rules.anvio_display_metabolism.output[0].format(genome=sample))
+        out.append(rules.microbeannotator_display_metabolism.output[0].format(genome=sample))
+        out.append(rules.kofam_display_metabolism.output[0].format(genome=sample))
         out.append(rules.anvio_microbeA_diff.output[0].format(genome=sample))
         out.append(rules.anvio_kofam_diff.output[0].format(genome=sample))
         out.append(rules.microbeA_kofam_diff.output[0].format(genome=sample))
