@@ -82,52 +82,35 @@ checkpoint process_check:
     output:"/tmp/process_check.done"
     shell:"touch {output}"
 
-rule download_genomes_refseq:
+rule download_genomes:
     input:rules.make_genomes_list.output
-    output:directory("resources/genomes/refseq/bacteria/{genome}")
+    output:"resources/genomes/{genome}.frn.gz"
     conda:"../envs/sample_selection.yml"
     shell:
         """
-        ncbi-genome-download -A {wildcards.genome} --section refseq bacteria -F "fasta,protein-fasta" -o $(dirname $(dirname $(dirname {output})))
-        """
-
-rule download_genomes_genbank:
-    input:rules.make_genomes_list.output
-    output:directory("resources/genomes/genbank/bacteria/{genome}")
-    conda:"../envs/sample_selection.yml"
-    shell:
-        """
-        ncbi-genome-download -A {wildcards.genome} --section genbank bacteria -F "fasta" -o $(dirname $(dirname $(dirname {output})))
-        """
-
-rule symlink_genomes_fna:
-    input:
-        peptable=rules.make_peptable.output,
-        genbank=rules.download_genomes_genbank.output,
-        refseq=rules.download_genomes_refseq.output
-    output:directory("resources/genomes/symlink/{genome}/{genome}.fna.gz"),
-    shell:
-        """
-        mkdir -p $(dirname {output})
         if [[ "{wildcards.genome}" == "GCA"* ]]; then
-            bash -c "ln -s $PWD/{input.genbank}/*fna.gz $PWD/{output}"
+            ncbi-genome-download -A "{wildcards.genome}" --section genbank bacteria -F "fasta" -o /tmp/{wildcards.genome}
+            mv /tmp/{wildcards.genome}/genbank/bacteria/{wildcards.genome}/*.gz {output}
         else
-            bash -c "ln -s $PWD/{input.refseq}/*fna.gz $PWD/{output}"
+            ncbi-genome-download -A "{wildcards.genome}" --section refseq bacteria -F "fasta" -o /tmp/{wildcards.genome}
+            mv /tmp/{wildcards.genome}/refseq/bacteria/{wildcards.genome}/*.gz {output}
         fi
         """
 
-rule symlink_genomes_faa:
-    input:
-        genbank=rules.symlink_genomes_fna.output,
-        refseq=rules.download_genomes_refseq.output
-    output:directory("resources/genomes/symlink/{genome}/{genome}.faa.gz"),
+rule gunzip:
+    input:rules.download_genomes.output
+    output:"resources/genomes/{genome}.frn"
     conda:"../envs/sample_selection.yml"
     shell:
         """
-        mkdir -p $(dirname {output})
-        if [[ "{wildcards.genome}" == "GCA"* ]]; then
-            transeq {input.genbank} {output}
-        else
-            bash -c "ln -s $PWD/{input.refseq}/*faa.gz $PWD/{output}/{wildcards.genome}.faa.gz"
-        fi
+        gunzip -c {input} > {output}
+        """
+
+rule transeq:
+    input:rules.gunzip.output
+    output:"resources/genomes/symlink/{genome}/{genome}.faa",
+    conda:"../envs/sample_selection.yml"
+    shell:
+        """
+        transeq {input} {output} 
         """

@@ -19,7 +19,7 @@ rule untar_kofams_list:
     output: "resources/kofams/list/ko_list"
     shell:
         """
-        gzip -dv {input} > {output}
+        gunzip -c {input} > {output}
         """
 
 rule untar_kofams_profile:
@@ -47,6 +47,7 @@ rule microbeannotator_db_builder:
         method="diamond"
     shell:
         """
+        echo $PATH
         microbeannotator_db_builder --light --database {output} -m {params.method} --no_aspera
         """
 
@@ -54,7 +55,7 @@ rule kofamscan:
     input:
         ko_list=rules.download_kofams_list.output,
         profiles=rules.untar_kofams_profile.output,
-        faa=rules.symlink_genomes_faa.output
+        faa=rules.transeq.output
     output:"results/annotation/kofamscan/{genome}.tsv"
     shell:
         """
@@ -66,7 +67,7 @@ rule microbeannotator:
         profile=rules.untar_kofams_profile.output,
         ko_list=rules.untar_kofams_list.output,
         db=rules.microbeannotator_db_builder.output,
-        ref=rules.symlink_genomes_faa.output
+        ref=rules.transeq.output
     output: "results/annotation/microbeAnnotator/{genome}/kofam_results/{genome}.faa.kofam.filt"
     params:
         dir=directory("results/annotation/microbeAnnotator/{genome}/"),
@@ -80,7 +81,7 @@ rule microbeannotator:
         """
 
 rule anvio_script_reformat:
-    input: rules.symlink_genomes_fna.output
+    input: rules.download_genomes.output
     output:"results/annotation/anvio/reformat/{genome}.fasta"
     conda:"../envs/anvio.yml"
     params:
@@ -114,7 +115,7 @@ rule anvio_run_kegg_kofams:
        db=rules.anvio_gen_contigs_db.output.db
     conda:"../envs/anvio.yml"
     log: "logs/annotation/anvio_run_kegg_kofams/{genome}.log"
-    threads: 40
+    threads: 1
     shell:
         """
         anvi-run-kegg-kofams -c {params.db} --kegg-data-dir {input.kofam} -T {threads} --just-do-it 2> {log}
@@ -134,3 +135,55 @@ rule anvio_export_functions:
         """
         anvi-export-functions -c {params.db} -o {output} 2> {log}
         """
+
+rule anvio_estimate_metabolism:
+    input:
+        done=rules.anvio_gen_contigs_db.output.done,
+        kegg=rules.anvio_run_kegg_kofams.output
+    output:"/tmp/{genome}/anvio_estimate_metabolism.0"
+    params:
+        db=rules.anvio_gen_contigs_db.output.db
+    conda:"../envs/anvio.yml"
+    log:"logs/annotation/anvio_estimate_metabolism/{genome}.log"
+    shell:
+        """
+        anvi-estimate-metabolism -c {params.db} 2> {log} 
+        """
+
+rule anvio_display_metabolism:
+    input:
+       done=rules.anvio_gen_contigs_db.output.done,
+       metabol=rules.anvio_estimate_metabolism.output
+    output:"/tmp/{genome}/anvio-display-metabolism.0"
+    params:
+       db=rules.anvio_gen_contigs_db.output.db
+    conda:"../envs/anvio.yml"
+    log:"logs/annotation/anvio-display-metabolism/{genome}.log"
+    shell:
+        """
+        anvi-display-metabolism -c {params.db} 2> {log}
+        """
+
+#rule microbeannotator_script_gen_user_module_file:
+#rule microbeannotator_script_gen_user_module_file:
+#rule microbeannotator_setup_user_modules:
+#rule microbeannotator_estimate_metabolism:
+#rule microbeannotator_display_metabolism:
+#rule kofam_generate_enzymes_list:
+#rule kofam_script_gen_user_module_file:
+#    input:
+#    output:
+#    params:
+#       db=rules.anvio_gen_contigs_db.output.db,
+#       name="{genome}",
+#       categorization="User modules; kofam set; {genome} metabolism",
+#       
+#    conda:"../envs/anvio.yml"
+#    log:"logs/annotation/kofam_script_gen_user_module_file/{genome}.log"
+#    shell:
+#        """
+#
+#        """
+#rule kofam_setup_user_modules:
+#rule kofam_estimate_metabolism: --user-modules
+#rule kofam_display_metabolism:
