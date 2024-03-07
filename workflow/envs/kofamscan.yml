@@ -5,5 +5,4 @@ channels:
   - conda-forge
   - anaconda
 dependencies:
-  - hmmer
-  - ruby
+  - kofamscan

@@ -7,6 +7,7 @@ dependencies:
   - r-optparse
   - pandas
   - emboss
+  - gffread
   - pip
   - pip:
     - ncbi-genome-download 

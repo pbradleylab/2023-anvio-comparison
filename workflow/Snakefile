@@ -18,6 +18,7 @@ def get_genomes(wildcards):
         out.append(rules.microbeA_anvio_diff.output[0].format(genome=sample))
         out.append(rules.kofam_anvio_diff.output[0].format(genome=sample))
         out.append(rules.kofam_microbeA_diff.output[0].format(genome=sample))
+        out.append(rules.anvio_export_functions_no_huerestic.output[0].format(genome=sample))
     return out
 
 rule all:
