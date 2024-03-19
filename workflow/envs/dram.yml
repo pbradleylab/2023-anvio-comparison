@@ -1,0 +1,8 @@
+name: dram
+channels:
+  - defaults
+  - bioconda
+  - conda-forge
+  - anaconda
+dependencies:
+  - dram

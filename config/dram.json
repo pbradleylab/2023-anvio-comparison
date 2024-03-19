@@ -1,0 +1,24 @@
+{
+  "search_databases": {
+    "kegg": null,
+    "kofam_hmm": "/home/kananen.13/workflows/2023-anvio-comparison/resources/DRAM_data/kofam_profiles.hmm",
+    "kofam_ko_list": "/home/kananen.13/workflows/2023-anvio-comparison/resources/DRAM_data/kofam_ko_list.tsv"
+  },
+  "dram_version": "1.4.6",
+  "description_db": "/home/kananen.13/workflows/2023-anvio-comparison/resources/DRAM_data/description_db.sqlite",
+  "setup_info": {
+    "kofam_hmm": {
+      "name": "KOfam db",
+      "citation": "T. Aramaki, R. Blanc-Mathieu, H. Endo, K. Ohkubo, M. Kanehisa, S. Goto, and H. Ogata, \"Kofamkoala: Kegg ortholog assignment based on profile hmm and adaptive score threshold,\" Bioinformatics, vol. 36, no. 7, pp. 2251\u20132252, 2020.",
+      "Download time": "09/09/2023, 07:38:37",
+      "Origin": "Downloaded by DRAM"
+    },
+    "kofam_ko_list": {
+      "name": "KOfam KO list",
+      "citation": "T. Aramaki, R. Blanc-Mathieu, H. Endo, K. Ohkubo, M. Kanehisa, S. Goto, and H. Ogata, \"Kofamkoala: Kegg ortholog assignment based on profile hmm and adaptive score threshold,\" Bioinformatics, vol. 36, no. 7, pp. 2251\u20132252, 2020.",
+      "Download time": "09/09/2023, 07:39:09",
+      "Origin": "Downloaded by DRAM"
+    },
+  },
+  "log_path": null
+}

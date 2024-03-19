@@ -9,16 +9,13 @@ include: "rules/comparison.smk"
 def get_genomes(wildcards):
     out = []
     for sample in pep.sample_table.sample_name.tolist():
-        out.append(rules.anvio_display_metabolism.output[0].format(genome=sample))
-        out.append(rules.microbeannotator_display_metabolism.output[0].format(genome=sample))
-        out.append(rules.kofam_display_metabolism.output[0].format(genome=sample))
-        out.append(rules.anvio_microbeA_diff.output[0].format(genome=sample))
-        out.append(rules.anvio_kofam_diff.output[0].format(genome=sample))
-        out.append(rules.microbeA_kofam_diff.output[0].format(genome=sample))
-        out.append(rules.microbeA_anvio_diff.output[0].format(genome=sample))
-        out.append(rules.kofam_anvio_diff.output[0].format(genome=sample))
-        out.append(rules.kofam_microbeA_diff.output[0].format(genome=sample))
+        out.append(rules.anvio_estimate_metabolism.output[0].format(genome=sample))
+        out.append(rules.microbeannotator_estimate_metabolism.output[0].format(genome=sample))
+        out.append(rules.kofam_estimate_metabolism.output[0].format(genome=sample))
         out.append(rules.anvio_export_functions_no_huerestic.output[0].format(genome=sample))
+        out.append(rules.microbeannotator_refined.output[0].format(genome=sample))
+        out.append(rules.kofamscan_params.output[0].format(genome=sample)),
+        out.append(rules.dram.output[0].format(genome=sample))
     return out
 
 rule all:
