@@ -14,8 +14,11 @@ def get_genomes(wildcards):
         out.append(rules.kofam_estimate_metabolism.output[0].format(genome=sample))
         out.append(rules.anvio_export_functions_no_huerestic.output[0].format(genome=sample))
         out.append(rules.microbeannotator_refined.output[0].format(genome=sample))
-        out.append(rules.kofamscan_params.output[0].format(genome=sample)),
-        out.append(rules.dram.output[0].format(genome=sample))
+        out.append(rules.kofamscan_refined.output[0].format(genome=sample)),
+        out.append(rules.dram.output[0].format(genome=sample)),
+        out.append(rules.anvio_setup_kegg_stray_kofams.output[0].format(genome=sample)),
+        out.append(rules.anvio_export_functions_stray.output[0].format(genome=sample)),
+        out.append(rules.anvio_estimate_metabolism_stray.output[0].format(genome=sample))
     return out
 
 rule all:

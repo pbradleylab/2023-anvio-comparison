@@ -6,3 +6,4 @@ channels:
   - anaconda
 dependencies:
   - kofamscan
+  - seqkit=2.8.0

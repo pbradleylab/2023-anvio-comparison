@@ -1,0 +1,12 @@
+Bacteroidaceae
+Cyanobiaceae
+Enterobacteriaceae
+Lachnospiraceae
+Microcystaceae
+Nanosynbacteraceae
+Pelagibacteraceae
+Rhodobacteraceae 
+Rhizobiaceae
+Saccharimonadaceae
+Streptococcaceae
+Synechococcaceae
