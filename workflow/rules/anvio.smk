@@ -121,7 +121,7 @@ rule anvio_gen_contigs_stray_db:
 rule anvio_run_kegg_kofams_stray:
     input:
         done=rules.anvio_gen_contigs_stray_db.output.done,
-        kofam=rules.anvio_setup_kegg_kofams.output
+        kofam=rules.anvio_setup_kegg_stray_kofams.output
     output:"/tmp/{genome}/anvio_run_kegg_kofams_stray/anvio_run_kegg_kofams.0"
     params:
        db=rules.anvio_gen_contigs_stray_db.output.db
@@ -130,7 +130,7 @@ rule anvio_run_kegg_kofams_stray:
     threads: 40
     shell:
         """
-        anvi-run-kegg-kofams --include-stray-KOs -c {params.db} --kegg-data-dir /home/kananen.13/workflows/2023-anvio-comparison/resources/feb_anvio/stray/ -T {threads} --just-do-it 2> {log}
+        anvi-run-kegg-kofams --include-stray-KOs -c {params.db} --kegg-data-dir {input.kofam} -T {threads} --just-do-it 2> {log}
         touch {output}
         """
 
@@ -140,7 +140,7 @@ rule anvio_export_functions_stray:
         kegg=rules.anvio_run_kegg_kofams_stray.output
      output:"results/annotation/anvio/anvio_functions_stray/{genome}.tsv"
      params:
-        db=rules.anvio_gen_contigs_db.output.db
+        db=rules.anvio_gen_contigs_stray_db.output.db
      conda:"../envs/anvio_stray.yml"
      log: "logs/annotation/anvio_export_functions_stray/{genome}.log"
      shell:
@@ -161,7 +161,7 @@ rule anvio_estimate_metabolism:
     log:"logs/annotation/anvio_estimate_metabolism/{genome}.log"
     shell:
         """
-        anvi-estimate-metabolism -c {params.db} --kegg-data-dir /home/kananen.13/workflows/2023-anvio-comparison/resources/feb_anvio/no_stray/ -O {params.prefix} 2> {log} 
+        anvi-estimate-metabolism -c {params.db} --kegg-data {input.kofam} -O {params.prefix} --just-do-it 2> {log} 
         """
 
 rule anvio_estimate_metabolism_stray:
@@ -173,9 +173,22 @@ rule anvio_estimate_metabolism_stray:
     params:
         db=rules.anvio_gen_contigs_stray_db.output.db,
         prefix="results/annotation/anvio/anvio_estimate_metabolism_stray/{genome}/anvio_estimate_metabolism"
-    conda:"../envs/anvio.yml"
+    conda:"../envs/anvio_stray.yml"
     log:"logs/annotation/anvio_estimate_metabolism/{genome}.log"
     shell:
         """
-        anvi-estimate-metabolism -c {params.db} --kegg-data-dir /home/kananen.13/workflows/2023-anvio-comparison/resources/feb_anvio/stray/ -O {params.prefix} 2> {log}
+        anvi-estimate-metabolism -c {params.db} --kegg-data-dir {input.kofam} -O {params.prefix} --include-stray-KOs --just-do-it 2> {log}
+        """
+
+rule anvi_get_sequences_for_gene_calls:
+    input:
+        done=rules.anvio_gen_contigs_stray_db.output.done,
+    output:"results/annotation/anvio/anvi_get_sequences_for_gene_calls/{genome}.faa"
+    params:
+        db=rules.anvio_gen_contigs_stray_db.output.db,
+    conda:"../envs/anvio_stray.yml"
+    log:"logs/annotation/anvi_get_sequences_for_gene_calls/{genome}.log"
+    shell:
+        """
+        anvi-get-sequences-for-gene-calls -c {params.db} --get-aa-sequences -o {output} 2> {log}
         """

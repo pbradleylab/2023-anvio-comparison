@@ -5,18 +5,18 @@ pip install hmmer
 pip install attrs
 pip install dataclasses
 
-wget -c https://github.com/cruizperez/MicrobeAnnotator/raw/master/microbeannotator/data/01.KEGG_Regular_Module_Information.pickle
-wget -c https://github.com/cruizperez/MicrobeAnnotator/raw/master/microbeannotator/data/03.KEGG_Structural_Module_Information.pickle
-wget -c https://github.com/cruizperez/MicrobeAnnotator/raw/master/microbeannotator/data/02.KEGG_Bifurcating_Module_Information.pickle
+wget -c https://github.com/cruizperez/MicrobeAnnotator/raw/master/microbeannotator/data/01.KEGG_Regular_Module_Information.pickle --no-check-certificate
+wget -c https://github.com/cruizperez/MicrobeAnnotator/raw/master/microbeannotator/data/03.KEGG_Structural_Module_Information.pickle --no-check-certificate
+wget -c https://github.com/cruizperez/MicrobeAnnotator/raw/master/microbeannotator/data/02.KEGG_Bifurcating_Module_Information.pickle --no-check-certificate
 
-wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/00.KEGG_Data_Scrapper.py
-wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/00.Module_Names.txt
-wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/01.Bifurcating_List.txt
-wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/02.Structural_List.txt
-wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/03.Bifurcating_Modules.dict
-wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/04.Structural_Modules.dict
-wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/05.Modules_Parsed.txt
-wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/06.Module_Groups.txt
+wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/00.KEGG_Data_Scrapper.py --no-check-certificate
+wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/00.Module_Names.txt --no-check-certificate
+wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/01.Bifurcating_List.txt --no-check-certificate
+wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/02.Structural_List.txt --no-check-certificate
+wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/03.Bifurcating_Modules.dict --no-check-certificate
+wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/04.Structural_Modules.dict --no-check-certificate
+wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/05.Modules_Parsed.txt --no-check-certificate
+wget -c https://raw.githubusercontent.com/cruizperez/MicrobeAnnotator/master/microbeannotator/data/01.KEGG_DB/06.Module_Groups.txt --no-check-certificate
 
 mv 01.KEGG_Regular_Module_Information.pickle $(echo $CONDA_PREFIX)/lib/python3.7/site-packages/microbeannotator/data/
 mv 02.KEGG_Bifurcating_Module_Information.pickle $(echo $CONDA_PREFIX)/lib/python3.7/site-packages/microbeannotator/data/
