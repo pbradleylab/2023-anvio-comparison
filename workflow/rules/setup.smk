@@ -1,3 +1,10 @@
+rule download_gtdb_meta:
+   output: "resources/gtdb/bac120_taxonomy_r214.tsv"
+   shell:
+       """
+       wget -c https://data.gtdb.ecogenomic.org/releases/release214/214.0/bac120_taxonomy_r214.tsv -O {output}
+       """
+
 rule download_dram_kegg_list:
     output: "resources/DRAM_data/kofam_ko_list.tsv"
     conda: "../envs/dram.yml"
@@ -21,6 +28,17 @@ rule download_kofams_profile:
     shell:
         """
         wget -c --no-http-keep-alive ftp://ftp.genome.jp/pub/db/kofam/profiles.tar.gz -O {output}
+        """
+
+rule eggnog_bacteria_db:
+    output:
+        dmnd="resources/eggnog/bacteria/db/bacteria.dmnd",
+        outdir=directory("resources/eggnog/bacteria/db/")
+    conda: "../envs/comparison.yml"
+    shell:
+        """
+        mkdir -p {output.outdir}
+        create_dbs.py -y -m diamond --dbname bacteria --taxa Bacteria --data_dir {output.outdir}
         """
 
 rule download_kofams_list:

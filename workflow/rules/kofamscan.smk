@@ -16,8 +16,6 @@ rule kofamscan:
         exec_annotation --cpu {threads} -f detail-tsv -p {input.profiles} -o {output} {input.indir} -k {input.ko_list} --tmp-dir /tmp/{wildcards.genome}/kofamscan/
         """
 
-
-
 rule kofamscan_refined:
     input:
         ko_list=rules.untar_kofams_list.output,
@@ -36,11 +34,12 @@ rule create_enzyme_file_kofam:
     shell:
         """
         echo "gene_id\tenzyme_accession\tsource" > {output}
+        grep -v '*' {input} > /tmp/{wildcards.genome}.tsv
         while read line
         do
-            echo $line | cut -f1,3 -d' ' | sed 's/$/\tKOfam/g' | sed 's/ /\t/' >> /tmp/{wildcards.genome}.create_enzyme_file_kofam
-        done < {input}
-        grep -v "#" /tmp/{wildcards.genome}.create_enzyme_file_kofam >> {output}
+            echo $line | cut -f2,3 -d' ' | sed 's/$/\tKOfam/g' | sed 's/ /\t/' >> /tmp/{wildcards.genome}.create_enzyme_file_kofam_tmp
+        done < /tmp/{wildcards.genome}.tsv
+        grep -v "#" /tmp/{wildcards.genome}.create_enzyme_file_kofam_tmp >> {output}
         """
 
 rule kofam_estimate_metabolism:
@@ -50,10 +49,10 @@ rule kofam_estimate_metabolism:
     output: "results/annotation/kofam_estimate_metabolism/{genome}/anvio_estimate_metabolism_modules.txt"
     params:
        db=rules.anvio_gen_contigs_db.output.db,
-       prefix="results/annotation/microbeannotator_estimate_metabolism/{genome}/anvio_estimate_metabolism"
+       prefix="results/annotation/kofam_estimate_metabolism/{genome}/anvio_estimate_metabolism"
     conda:"../envs/anvio.yml"
     log:"logs/annotation/kofam_estimate_metabolism/{genome}.log"
     shell:
         """
-        anvi-estimate-metabolism -c {params.db} --user-modules {input.enzymes} --kegg-data-dir {input.kofam} -O {params.prefix} 2> {log}
+        anvi-estimate-metabolism -c {params.db} --enzymes-txt {input.enzymes} --kegg-data-dir {input.kofam} -O {params.prefix} 2> {log}
         """

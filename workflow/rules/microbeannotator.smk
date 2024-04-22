@@ -25,9 +25,9 @@ rule microbeannotator_refined:
         ko_list=rules.untar_kofams_list.output,
         db=rules.microbeannotator_db_builder.output,
         ref=rules.anvi_get_sequences_for_gene_calls.output,
-    output: "results/annotation/microbeAnnotator/refined/{genome}/kofam_results/{genome}.faa.kofam.filt"
+    output: "results/annotation/microbeAnnotator_refined/{genome}/kofam_results/{genome}.faa.kofam.filt"
     params:
-        dir=directory("results/annotation/microbeAnnotator/refined/{genome}/"),
+        dir=directory("results/annotation/microbeAnnotator_refined/{genome}/"),
         method="blast"
     conda: "../envs/microbeannotator.yml"
     threads:40
@@ -37,16 +37,6 @@ rule microbeannotator_refined:
         mkdir -p {params.dir}
         microbeannotator -t {threads} --refine -i {input.ref} -d {input.db} -o {params.dir} -m {params.method} 2> {log}
         """
-
-#rule gather_microbeannotator_strays:
-#    input:
-#        strays=config["anvio_strays"],
-#        kofam=rules.microbeannotator_refined.input
-#    output:"results/annotation/microbeAnnotator/strays/{genome}.txt"
-#    shell:
-#        """
-#        cut -d ' ' -f3 > {output}
-#        """
 
 rule create_enzyme_file_microbeannotator:
     input:rules.microbeannotator.output
@@ -61,13 +51,28 @@ rule create_enzyme_file_microbeannotator:
         grep -v "#" /tmp/{wildcards.genome}.create_enzyme_file_microbeannotator >> {output}
         """
 
+rule anvio_gen_contigs_no_annotations:
+    input:rules.anvio_script_reformat.output
+    output:
+        db="results/annotation/anvio/anvio_gen_contigs_no_annotations/{genome}/output.db",
+        done="/tmp/anvio/{genome}.anvio_gen_contigs_db"
+    conda:"../envs/anvio.yml"
+    log: "logs/annotation/anvio_gen_contigs_db/{genome}.log"
+    params:
+        bacteria="{genome}"
+    shell:
+        """
+        anvi-gen-contigs-database -f {input} -o {output.db} -n {params.bacteria} 2> {log}
+        touch {output.done}
+        """
+
 rule microbeannotator_estimate_metabolism:
     input:
        enzymes=rules.create_enzyme_file_microbeannotator.output,
        kofam=rules.anvio_setup_kegg_kofams.output
     output:"results/annotation/microbeannotator_estimate_metabolism/{genome}/anvio_estimate_metabolism_modules.txt"
     params:
-       db=rules.anvio_gen_contigs_db.output.db,
+       db=rules.anvio_gen_contigs_no_annotations.output,
        prefix="results/annotation/microbeannotator_estimate_metabolism/{genome}/anvio_estimate_metabolism"
     conda:"../envs/anvio.yml"
     log:"logs/annotation/microbeannotator_estimate_metabolism/{genome}.log"
@@ -77,7 +82,7 @@ rule microbeannotator_estimate_metabolism:
         """
 
 rule create_enzyme_file_microbeannotator_refined:
-    input:rules.microbeannotator_refined.output
+    input:rules.microbeannotator_refined.output.db
     output:"results/annotation/create_enzyme_file/{genome}.microbeannotator_refined"
     shell:
         """
@@ -95,7 +100,7 @@ rule microbeannotator_estimate_metabolism_refined:
        kofam=rules.anvio_setup_kegg_kofams.output
     output:"results/annotation/microbeannotator_refined_estimate_metabolism/{genome}/anvio_estimate_metabolism_modules.txt"
     params:
-       db=rules.anvio_gen_contigs_db.output.db,
+       db=rules.anvio_gen_contigs_no_annotations.output.db,
        prefix="results/annotation/microbeannotator_refined_estimate_metabolism/{genome}/anvio_estimate_metabolism"
     conda:"../envs/anvio.yml"
     log:"logs/annotation/microbeannotator_refined_estimate_metabolism/{genome}.log"
