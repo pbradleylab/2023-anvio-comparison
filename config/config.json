@@ -1,6 +1,4 @@
 {
     "pepfile":"config/pepconfig.yml",
-    "dbs":{
-        "bac120":""
-    }, 
+    "families":"config/sample_selection.smk"
 }

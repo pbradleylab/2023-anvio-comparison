@@ -1,0 +1,11 @@
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - R
+  - ggplot2
+  - tidyverse
+  - dplyr
+  - stringr
+  - plyr

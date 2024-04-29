@@ -34,25 +34,52 @@ rule create_enzyme_file_kofam:
     shell:
         """
         echo "gene_id\tenzyme_accession\tsource" > {output}
-        grep -v '*' {input} > /tmp/{wildcards.genome}.tsv
-        while read line
-        do
-            echo $line | cut -f2,3 -d' ' | sed 's/$/\tKOfam/g' | sed 's/ /\t/' >> /tmp/{wildcards.genome}.create_enzyme_file_kofam_tmp
-        done < /tmp/{wildcards.genome}.tsv
-        grep -v "#" /tmp/{wildcards.genome}.create_enzyme_file_kofam_tmp >> {output}
+        grep '*' {input} > /tmp/{wildcards.genome}.tsv
+        cut -f2,3 /tmp/{wildcards.genome}.tsv > /tmp/{wildcards.genome}.1
+        awk '{{print $0"\tKOfam"}}' /tmp/{wildcards.genome}.1 >> {output}
+        """
+
+rule anvio_gen_contigs_no_annotations_refined_kofam:
+    input:rules.anvio_script_reformat.output
+    output:
+        db="results/annotation/anvio/anvio_gen_contigs_no_annotations_refined_kofam/{genome}/output.db",
+        done="/tmp/anvio/{genome}.anvio_gen_contigs_no_annotation_refined"
+    conda:"../envs/anvio.yml"
+    log: "logs/annotation/anvio_gen_contigs_no_annotations_refined_kofam/{genome}.log"
+    params:
+        bacteria="{genome}"
+    shell:
+        """
+        anvi-gen-contigs-database -f {input} -o {output.db} -n {params.bacteria} 2> {log}
+        touch {output.done}
+        """
+
+rule anvio_gen_contigs_no_annotations_kofam:
+    input:rules.anvio_script_reformat.output
+    output:
+        db="results/annotation/anvio/anvio_gen_contigs_no_annotations_kofam/{genome}/output.db",
+        done="/tmp/anvio/{genome}.anvio_gen_contigs_no_annotation_kofam"
+    conda:"../envs/anvio.yml"
+    log: "logs/annotation/anvio_gen_contigs_no_annotations_kofam/{genome}.log"
+    params:
+        bacteria="{genome}"
+    shell:
+        """
+        anvi-gen-contigs-database -f {input} -o {output.db} -n {params.bacteria} 2> {log}
+        touch {output.done}
         """
 
 rule kofam_estimate_metabolism:
     input:
        enzymes=rules.create_enzyme_file_kofam.output,
-       kofam=rules.anvio_setup_kegg_kofams.output
+       kofam=rules.anvio_setup_kegg_kofams.output,
+       db=rules.anvio_gen_contigs_no_annotations_kofam.output.db
     output: "results/annotation/kofam_estimate_metabolism/{genome}/anvio_estimate_metabolism_modules.txt"
     params:
-       db=rules.anvio_gen_contigs_db.output.db,
        prefix="results/annotation/kofam_estimate_metabolism/{genome}/anvio_estimate_metabolism"
     conda:"../envs/anvio.yml"
     log:"logs/annotation/kofam_estimate_metabolism/{genome}.log"
     shell:
         """
-        anvi-estimate-metabolism -c {params.db} --enzymes-txt {input.enzymes} --kegg-data-dir {input.kofam} -O {params.prefix} 2> {log}
+        anvi-estimate-metabolism -c {input.db} --enzymes-txt {input.enzymes} --kegg-data-dir {input.kofam} -O {params.prefix} 2> {log}
         """

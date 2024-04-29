@@ -5,12 +5,12 @@ channels:
   - conda-forge
   - anaconda
 dependencies:
-  - python=3.10
+  - python=3.10.*
   - sqlite
   - prodigal
   - idba
   - mcl
-  - muscle=3.8.1551
+  - muscle
   - famsa
   - hmmer
   - diamond
@@ -20,7 +20,7 @@ dependencies:
   - bowtie2
   - bwa
   - graphviz
-  - samtools>=1.9
+  - samtools
   - trimal
   - iqtree
   - trnascan-se

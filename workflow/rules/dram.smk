@@ -1,3 +1,8 @@
+"""
+For running dram as a second check.
+
+Author: Kathryn Kananen
+"""
 include: "sample_selection.smk"
 include: "setup.smk"
 

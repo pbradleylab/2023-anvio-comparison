@@ -17,7 +17,7 @@ rule anvio_gen_contigs_db:
     input:rules.anvio_script_reformat.output
     output:
         db="results/annotation/anvio/anvio_gen_contigs_db/{genome}/output.db",
-        done="/tmp/anvio/{genome}.anvio_gen_contigs_db"
+        done="results/temporary/anvio/{genome}.anvio_gen_contigs_db"
     conda:"../envs/anvio.yml"
     log: "logs/annotation/anvio_gen_contigs_db/{genome}.log"
     params:
@@ -28,11 +28,24 @@ rule anvio_gen_contigs_db:
         touch {output.done}
         """
 
+rule anvio_make_gff:
+    input:
+        db=rules.anvio_gen_contigs_db.output.db
+    output:"results/annotation/anvio/anvio_make_gff/{genome}.gff",
+    conda:"../envs/anvio.yml"
+    log: "logs/annotation/anvio_make_gff/{genome}.log"
+    params:
+        bacteria="{genome}"
+    shell:
+        """
+        anvi-get-sequences-for-gene-calls -c {input.db} -o {output} --export-gff3
+        """
+
 rule anvio_gen_contigs_no_heuristic_db:
     input:rules.anvio_script_reformat.output
     output:
         db="results/annotation/anvio/anvio_gen_contigs_no_heuristic_db/{genome}/output.db",
-        done="/tmp/anvio/{genome}.anvio_gen_contigs_no_heuristic_db"
+        done="results/temporary/anvio/{genome}.anvio_gen_contigs_no_heuristic_db"
     conda:"../envs/anvio.yml"
     log: "logs/annotation/anvio_gen_contigs_db/{genome}.log"
     params:
@@ -47,7 +60,7 @@ rule anvio_run_kegg_kofams:
     input:
         done=rules.anvio_gen_contigs_db.output.done,
         kofam=rules.anvio_setup_kegg_kofams.output
-    output:"/tmp/{genome}/anvio_run_kegg_kofams.0"
+    output:"results/temporary/anvio_run_kegg_kofams/{genome}/anvio_run_kegg_kofams.0"
     params:
        db=rules.anvio_gen_contigs_db.output.db
     conda:"../envs/anvio.yml"
