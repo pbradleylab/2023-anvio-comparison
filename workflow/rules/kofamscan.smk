@@ -7,8 +7,8 @@ rule kofamscan:
     input:
         ko_list=rules.untar_kofams_list.output,
         profiles=rules.untar_kofams_profile.output,
-        indir=rules.anvi_get_sequences_for_gene_calls.output
-    output:"results/annotation/kofamscan/{genome}.tsv"
+        indir=rules.anvio_get_sequences_for_gene_calls.output
+    output:"results/annotation/kofamscan/functions/default/{genome}.tsv"
     conda:"../envs/kofamscan.yml"
     threads:40
     shell:
@@ -20,8 +20,8 @@ rule kofamscan_refined:
     input:
         ko_list=rules.untar_kofams_list.output,
         profiles=rules.untar_kofams_profile.output,
-        faa=rules.anvi_get_sequences_for_gene_calls.output
-    output:"results/annotation/kofamscan_params_run/{genome}.tsv"
+        faa=rules.anvio_get_sequences_for_gene_calls.output
+    output:"results/annotation/kofamscan/functions/refined/{genome}.tsv"
     conda:"../envs/kofamscan.yml"
     shell:
         """
@@ -42,10 +42,10 @@ rule create_enzyme_file_kofam:
 rule anvio_gen_contigs_no_annotations_refined_kofam:
     input:rules.anvio_script_reformat.output
     output:
-        db="results/annotation/anvio/anvio_gen_contigs_no_annotations_refined_kofam/{genome}/output.db",
-        done="/tmp/anvio/{genome}.anvio_gen_contigs_no_annotation_refined"
+        db="results/annotation/anvio/contigs_db/kofamscan/refined/{genome}/output.db",
+        done="results/temporary/anvio/{genome}.anvio_gen_contigs_no_annotation_refined"
     conda:"../envs/anvio.yml"
-    log: "logs/annotation/anvio_gen_contigs_no_annotations_refined_kofam/{genome}.log"
+    log: "logs/annotation/anvio/contigs_db/kofamscan/refined/{genome}.log"
     params:
         bacteria="{genome}"
     shell:
@@ -57,10 +57,10 @@ rule anvio_gen_contigs_no_annotations_refined_kofam:
 rule anvio_gen_contigs_no_annotations_kofam:
     input:rules.anvio_script_reformat.output
     output:
-        db="results/annotation/anvio/anvio_gen_contigs_no_annotations_kofam/{genome}/output.db",
-        done="/tmp/anvio/{genome}.anvio_gen_contigs_no_annotation_kofam"
+        db="results/annotation/anvio/contigs_db/kofamscan/default/{genome}/output.db",
+        done="results/temporary/anvio/{genome}.anvio_gen_contigs_no_annotation_kofam"
     conda:"../envs/anvio.yml"
-    log: "logs/annotation/anvio_gen_contigs_no_annotations_kofam/{genome}.log"
+    log: "logs/annotation/anvio/contigs_db/kofamscan/default/{genome}.log"
     params:
         bacteria="{genome}"
     shell:
@@ -74,11 +74,11 @@ rule kofam_estimate_metabolism:
        enzymes=rules.create_enzyme_file_kofam.output,
        kofam=rules.anvio_setup_kegg_kofams.output,
        db=rules.anvio_gen_contigs_no_annotations_kofam.output.db
-    output: "results/annotation/kofam_estimate_metabolism/{genome}/anvio_estimate_metabolism_modules.txt"
+    output: "results/annotation/kofamscan/metabolism/default/{genome}/anvio_estimate_metabolism_modules.txt"
     params:
-       prefix="results/annotation/kofam_estimate_metabolism/{genome}/anvio_estimate_metabolism"
+       prefix="results/annotation/kofamscan/metabolism/default/{genome}/anvio_estimate_metabolism"
     conda:"../envs/anvio.yml"
-    log:"logs/annotation/kofam_estimate_metabolism/{genome}.log"
+    log:"logs/annotation/kofamscan/metabolism/default/{genome}.log"
     shell:
         """
         anvi-estimate-metabolism -c {input.db} --enzymes-txt {input.enzymes} --kegg-data-dir {input.kofam} -O {params.prefix} 2> {log}

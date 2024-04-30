@@ -6,20 +6,7 @@ pepfile: config["pepfile"]
 
 include: "rules/comparison.smk"
 
-def get_genomes(wildcards):
-    out = []
-    for sample in pep.sample_table.sample_name.tolist():
-        out.append(rules.anvio_estimate_metabolism.output[0].format(genome=sample))
-        out.append(rules.anvio_export_functions_no_huerestic.output[0].format(genome=sample))
-        out.append(rules.anvio_export_functions_stray.output[0].format(genome=sample))
-        out.append(rules.anvio_export_functions.output[0].format(genome=sample))
-        out.append(rules.anvio_estimate_metabolism_stray.output[0].format(genome=sample))
-        #out.append(rules.kofamscan_refined.output[0].format(genome=sample))
-        out.append(rules.kofam_estimate_metabolism.output[0].format(genome=sample))
-        out.append(rules.microbeannotator_estimate_metabolism.output[0].format(genome=sample))
-        #out.append(rules.microbeannotator_estimate_metabolism_refined.output[0].format(genome=sample)),
-        #out.append(rules.eggnog_mapper.output[0].format(genome=sample))
-    return out
 
 rule all:
-    input:get_genomes
+    input:
+        table=rules.generate_f1_table.output
