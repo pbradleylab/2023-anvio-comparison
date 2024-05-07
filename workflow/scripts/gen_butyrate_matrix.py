@@ -6,8 +6,8 @@ import os;
 import pandas as pd
 
 genome_info_file = "Lachno_genomes.txt"
-genome_info = pd.read_csv(genome_info_file, sep="\t")
-acc_list = genome_info.accession_short.to_list()
+genome_info = pd.read_csv(genome_info_file, sep="\t", index_col=10)
+acc_list = genome_info.index.to_list()
 tool_list = ["anvio", "kofamscan", "MicrobeAnnotator"]
 
 completeness_matrix = pd.DataFrame(index = acc_list, columns = tool_list)
