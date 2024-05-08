@@ -76,9 +76,9 @@ rule anvio_run_kegg_kofams_no_heuristic:
     input:
         done=rules.anvio_gen_contigs_no_heuristic_db.output.done,
         kofam=rules.anvio_setup_kegg_kofams.output
-    output:"/tmp/{genome}/anvio_run_kegg_kofams_no_heuristic/anvio_run_kegg_kofams.0"
+    output:"results/temporary/kegg/{genome}/anvio_run_kegg_kofams_no_heuristic/anvio_run_kegg_kofams.0"
     params:
-       db=rules.anvio_gen_contigs_db.output.db
+       db=rules.anvio_gen_contigs_no_heuristic_db.output.db
     conda:"../envs/anvio.yml"
     log: "logs/annotation/anvio_run_kegg_kofams/no_heuristic/{genome}.log"
     threads: 40

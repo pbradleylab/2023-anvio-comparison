@@ -15,7 +15,7 @@ def get_genomes(wildcards):
         out.append(rules.kofamscan_refined.output[0].format(genome=sample))
         out.append(rules.kofam_estimate_metabolism.output[0].format(genome=sample))
         out.append(rules.microbeannotator_estimate_metabolism.output[0].format(genome=sample))
-        out.append(rules.microbeannotator_estimate_metabolism_refined.output[0].format(genome=sample)),
+        out.append(rules.microbeannotator_estimate_metabolism_refined.output[0].format(genome=sample))
         out.append(rules.eggnog_mapper.output[0].format(genome=sample))
     return out
 
@@ -67,11 +67,13 @@ rule generate_f1_table:
         met_mara="results/annotation/microbeAnnotator/metabolism/default/",
         met_mare="results/annotation/microbeAnnotator/metabolism/refined/",
         met_anst="results/annotation/anvio/metabolism/default/",
-        met_anra="results/annotation/anvio/metabolism/refined/"
+        met_anra="results/annotation/anvio/metabolism/stray/"
     output: "results/comparison/f1_table/f1_table.tsv"
+    log: "logs/comparison/generate_f1_table/log.txt"
     shell:
         """
-        echo -e "accession\tgtdb_Family\tspecies\tnumber_genes\tgenes_annotated_kora\tgenes_annotated_kore\tgenes_mara\tgenes_mare\tgenes_anra\tgenes_anst\tgenes_annr\tkora_metabolism\tmara_metabolism\tmare_metabolism\tanra_metabolism\tanst_metabolism" > f1.table
+        sed '1d' config/gtdb_sample_table.tsv > /tmp/gtdb_sample_table.tsv
+        echo -e "accession\tgtdb_family\tspecies\tnumber_genes\tgenes_annotated_kora\tgenes_annotated_kore\tgenes_mara\tgenes_mare\tgenes_anra\tgenes_anst\tgenes_annr\tkora_metabolism\tmara_metabolism\tmare_metabolism\tanra_metabolism\tanst_metabolism" > /tmp/f1.table 2> {log} 
         while IFS=$'\t' read -r acc fam _; do
             gene_num=$(grep -c ">" "{params.genes}$acc.faa")
             kofam_genes=$(grep '*' {params.genes_kora}$acc.tsv | cut -f2 | sort -u | wc -l)
@@ -79,21 +81,21 @@ rule generate_f1_table:
             microbea_genes=$(cat {params.genes_mara}$acc/kofam_results/$acc.faa.kofam.filt | cut -f1 | sort -u | wc -l)
             microbea_genes_r=$(cat {params.genes_mare}$acc/kofam_results/$acc.faa.kofam.filt | cut -f1 | sort -u | wc -l)
    
-            species=$(grep $acc ${input.metadata} | cut -f17 | sed 's/.*s__//g')
- 
+            species=$(grep $acc {input.metadata} | cut -f2 | sed 's/.*s__//g')
             anra=$(cat {params.genes_anra}$acc.tsv | cut -f1 | sort -u | wc -l)
             anst=$(cat {params.genes_anst}$acc.tsv | cut -f1 | sort -u | wc -l)
             annr=$(cat {params.genes_annr}$acc.tsv | cut -f1 | sort -u | wc -l)
     
-            kora_m=$(cut -f10 {params.met_kora}$acc/anvio_estimate_metabolism_modules.txt | sed 's/$/+/' | tr -d '\n' | sed 's/+$/\n/' | bc -lq)
-            mara_m=$(cut -f10 {params.met_mara}$acc/anvio_estimate_metabolism_modules.txt | sed 's/$/+/' | tr -d '\n' | sed 's/+$/\n/' | bc -lq)
-            mare_m=$(cut -f10 {params.met_mare}$acc/anvio_estimate_metabolism_modules.txt | sed 's/$/+/' | tr -d '\n' | sed 's/+$/\n/' | bc -lq)
-            anst_m=$(cut -f10 {params.met_anst}$acc/anvio_estimate_metabolism_modules.txt | sed 's/$/+/' | tr -d '\n' | sed 's/+$/\n/' | bc -lq)
-            anra_m=$(cut -f10 {params.met_anra}$acc/anvio_estimate_metabolism_modules.txt | sed 's/$/+/' | tr -d '\n' | sed 's/+$/\n/' | bc -lq)
+            kora_m=$(cut -f10 {params.met_kora}$acc/anvio_estimate_metabolism_modules.txt | awk '{{ sum += $1 }} END {{ print sum }}' | bc -lq)
+            mara_m=$(cut -f10 {params.met_mara}$acc/anvio_estimate_metabolism_modules.txt | awk '{{ sum += $1 }} END {{ print sum }}' | bc -lq)
+            mare_m=$(cut -f10 {params.met_mare}$acc/anvio_estimate_metabolism_modules.txt | awk '{{ sum += $1 }} END {{ print sum }}' | bc -lq)
+            anst_m=$(cut -f10 {params.met_anst}$acc/anvio_estimate_metabolism_modules.txt | awk '{{ sum += $1 }} END {{ print sum }}' | bc -lq)
+            anra_m=$(cut -f10 {params.met_anra}$acc/anvio_estimate_metabolism_modules.txt | awk '{{ sum += $1 }} END {{ print sum }}' | bc -lq)
     
-            echo -e "$acc\t$fam\t$species\t$gene_num\t$kofam_genes\t$kofam_genes_r\t$microbea_genes\t$microbea_genes_r\t$anra\t$anst\t$annr\t$kora_m\t$mare_m\t$mara_m\t$anst_m\t$anre_m" >> /tmp/f1.table
-        done < "config/gtdb_sample_table.tsv"
-        grep -v "sample_name" /tmp/f1.table {output}
+            echo -e "$acc\t$fam\t$species\t$gene_num\t$kofam_genes\t$kofam_genes_r\t$microbea_genes\t$microbea_genes_r\t$anra\t$anst\t$annr\t$kora_m\t$mara_m\t$mare_m\t$anra_m\t$anst_m" >> /tmp/f1.table
+        done < /tmp/gtdb_sample_table.tsv
+        #mkdir -p $(dirname {output})
+        grep -v "sample_name" /tmp/f1.table > {output}
         """
 
 rule generate_f1a:
