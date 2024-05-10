@@ -16,19 +16,21 @@ if len(sys.argv) < 3:
 
 genome_info_file = sys.argv[1]
 module_output_folder = sys.argv[2]
+
+# CONSTANTS
 tool_list = ["anvio", "kofamscan", "MicrobeAnnotator"]
+module_list = ["BUTANOATE", "SUBSPEC", "BUCASYNOP"]
 
-completeness_matrix = pd.DataFrame(index = acc_list, columns = tool_list)
-for acc in acc_list:
-  for tool in tool_list:
-    infile = os.path.join("Archive/BUTANOATE_MODULE_OUTPUT", tool, "default", acc + "_modules.txt")
-    df = pd.read_csv(infile, sep="\t")
-    completeness_matrix.loc[acc, tool] = df[df.module == "BUTANOATE"].loc[0,"pathwise_module_completeness"]
+genome_info = pd.read_csv(genome_info_file, sep="\t", index_col=0)
+acc_list = genome_info.index.to_list()
 
-completeness_matrix.index.name = "genome"
-completeness_matrix.to_csv("butanoate_completeness_matrix.txt", sep="\t")
+for mod in module_list:
+  completeness_matrix = pd.DataFrame(index = acc_list, columns = tool_list)
+  for acc in acc_list:
+    for tool in tool_list:
+      infile = os.path.join(module_output_folder, tool, "default", acc + "_modules.txt")
+      df = pd.read_csv(infile, sep="\t", index_col = 0)
+      completeness_matrix.loc[acc, tool] = df.loc[mod,"pathwise_module_completeness"]
 
-# rename rows by species name rather than GTDB accession
-acc_to_species = {acc: genome_info.loc[acc, "species"].replace("s__", "") + f"  ({acc})" for acc in genome_info.index}
-completeness_matrix.rename(acc_to_species, inplace=True)
-completeness_matrix.to_csv("butanoate_completeness_matrix_labeled.txt", sep="\t")
+  completeness_matrix.index.name = "genome"
+  completeness_matrix.to_csv(f"{mod}_completeness_matrix.txt", sep="\t")
