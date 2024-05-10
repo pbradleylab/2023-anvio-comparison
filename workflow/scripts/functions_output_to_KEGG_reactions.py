@@ -79,7 +79,7 @@ args = argparse.Namespace()
 db = kegg.ModulesDatabase(mod_db_path, args)
 
 genome_info = pd.read_csv(genome_info_file, sep="\t")
-acc_list = genome_info.accession_short.to_list()
+acc_list = genome_info.sample_name.to_list()
 
 target_dataset_list = target_dataset_folders.split(",")
 
