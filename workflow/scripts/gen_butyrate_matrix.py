@@ -1,13 +1,21 @@
 #!/usr/bin/python
 # a script to combine various metabolism output files into one matrix
 # used by the driver script generate_butyrate_completeness_matrix.sh 
+# usage: python gen_butyrate_matrix.py GENOMES_FILE MODULE_OUTPUT_FOLDER
 
-import os;
+import os
+import sys
+import argparse
 import pandas as pd
 
-genome_info_file = "Lachno_genomes.txt"
-genome_info = pd.read_csv(genome_info_file, sep="\t", index_col=10)
-acc_list = genome_info.index.to_list()
+# COMMAND LINE PARAMETERS
+if len(sys.argv) < 3:
+    print("USAGE ERROR: not enough command-line arguments\n" +
+          "python gen_butyrate_matrix.py GENOMES_FILE MODULE_OUTPUT_FOLDER")
+    sys.exit(1)
+
+genome_info_file = sys.argv[1]
+module_output_folder = sys.argv[2]
 tool_list = ["anvio", "kofamscan", "MicrobeAnnotator"]
 
 completeness_matrix = pd.DataFrame(index = acc_list, columns = tool_list)
