@@ -5,76 +5,81 @@
 # creates a matrix of the results wherein each row describes a genome and each column describes an annotation tool
 
 
+# INPUT VARIABLES
+USER_MODULES_FOLDER="Butanoate_module/"
+FUNCTIONS_OUTPUT_DIR="Archive"
+GENOMES_FILE="lachno.tsv"
+
 # create user-defined modules database with the butyrate biosynthesis module
-# modules file must be stored at this relative path: `Butanoate_module/modules/BUTANOATE``
-anvi-setup-user-modules -u Butanoate_module/
+# modules file must be stored at this relative path: `${USER_MODULES_FOLDER}/modules/BUTANOATE``
+anvi-setup-user-modules -u $USER_MODULES_FOLDER
 
 # convert functions output from each tool to enzymes-txt input files for anvi-estimate-metabolism
-# relies on the data being stored at these relative paths: `Archive/{TOOL}/functions/default/{GENOME_ACCESSION}.tsv`
-# also relies on the input file `Lachno_genomes.txt` containing the accessions of the Lachnospiraceae genomes
-mkdir -p Archive/enzymes-txt-files
+# relies on the data being stored at these relative paths: `${FUNCTIONS_OUTPUT_DIR}/{TOOL}/functions/default/{GENOME_ACCESSION}.tsv`
+# also relies on the input file $GENOMES_FILE containing the accessions of the Lachnospiraceae genomes
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files
 
 ## first we process the anvi'o files
-mkdir -p Archive/enzymes-txt-files/anvio
-mkdir -p Archive/enzymes-txt-files/anvio/default
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/anvio
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/anvio/default
 while read acc; do \
-  python functions_output_to_enzymes_txt.py Archive/anvio/functions/default/${acc}.tsv \
-    Archive/enzymes-txt-files/anvio/default/${acc}_enzymes.txt \
+  python functions_output_to_enzymes_txt.py ${FUNCTIONS_OUTPUT_DIR}/anvio/functions/default/${acc}.tsv \
+    ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/anvio/default/${acc}_enzymes.txt \
     anvio; \
-done < <(tail -n+2 Lachno_genomes.txt | cut -f 11 )
+done < <(tail -n+2 $GENOMES_FILE | cut -f 1 )
 
 ## then kofamscan files
-mkdir -p Archive/enzymes-txt-files/kofamscan
-mkdir -p Archive/enzymes-txt-files/kofamscan/default
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/kofamscan
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/kofamscan/default
 while read acc; do \
-  python functions_output_to_enzymes_txt.py Archive/kofamscan/functions/default/${acc}.tsv \
-    Archive/enzymes-txt-files/kofamscan/default/${acc}_enzymes.txt \
+  python functions_output_to_enzymes_txt.py ${FUNCTIONS_OUTPUT_DIR}/kofamscan/functions/default/${acc}.tsv \
+    ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/kofamscan/default/${acc}_enzymes.txt \
     kofamscan; \
-done < <(tail -n+2 Lachno_genomes.txt | cut -f 11 )
+done < <(tail -n+2 $GENOMES_FILE | cut -f 1 )
 
 ## then MicrobeAnnotator files
-mkdir -p Archive/enzymes-txt-files/MicrobeAnnotator
-mkdir -p Archive/enzymes-txt-files/MicrobeAnnotator/default
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/MicrobeAnnotator
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/MicrobeAnnotator/default
 while read acc; do \
-  python functions_output_to_enzymes_txt.py Archive/MicrobeAnnotator/functions/default/${acc}/annotation_results/${acc}.faa.annot \
-    Archive/enzymes-txt-files/MicrobeAnnotator/default/${acc}_enzymes.txt \
+  python functions_output_to_enzymes_txt.py ${FUNCTIONS_OUTPUT_DIR}/MicrobeAnnotator/functions/default/${acc}/annotation_results/${acc}.faa.annot \
+    ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/MicrobeAnnotator/default/${acc}_enzymes.txt \
     MicrobeAnnotator; \
-done < <(tail -n+2 Lachno_genomes.txt | cut -f 11 )
+done < <(tail -n+2 $GENOMES_FILE | cut -f 1 )
 
 # estimate completeness of the pathway
 ## first for anvi'o
-mkdir -p Archive/BUTANOATE_MODULE_OUTPUT
-mkdir -p Archive/BUTANOATE_MODULE_OUTPUT/anvio
-mkdir -p Archive/BUTANOATE_MODULE_OUTPUT/anvio/default
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/anvio
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/anvio/default
 while read acc; do \
-  anvi-estimate-metabolism --enzymes-txt Archive/enzymes-txt-files/anvio/default/${acc}_enzymes.txt \
-    -u Butanoate_module/ \
+  anvi-estimate-metabolism --enzymes-txt ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/anvio/default/${acc}_enzymes.txt \
+    -u $USER_MODULES_FOLDER \
    --only-user-modules \
-   -O Archive/BUTANOATE_MODULE_OUTPUT/anvio/default/${acc} \
+   -O ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/anvio/default/${acc} \
    --include-zeros; \
-done < <(tail -n+2 Lachno_genomes.txt | cut -f 11 )
+done < <(tail -n+2 $GENOMES_FILE | cut -f 1 )
 
 ## then for kofamscan
-mkdir -p Archive/BUTANOATE_MODULE_OUTPUT/kofamscan
-mkdir -p Archive/BUTANOATE_MODULE_OUTPUT/kofamscan/default
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/kofamscan
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/kofamscan/default
 while read acc; do \
-  anvi-estimate-metabolism --enzymes-txt Archive/enzymes-txt-files/kofamscan/default/${acc}_enzymes.txt \
-    -u Butanoate_module/ \
+  anvi-estimate-metabolism --enzymes-txt ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/kofamscan/default/${acc}_enzymes.txt \
+    -u $USER_MODULES_FOLDER \
    --only-user-modules \
-   -O Archive/BUTANOATE_MODULE_OUTPUT/kofamscan/default/${acc} \
+   -O ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/kofamscan/default/${acc} \
    --include-zeros; \
-done < <(tail -n+2 Lachno_genomes.txt | cut -f 11 )
+done < <(tail -n+2 $GENOMES_FILE | cut -f 1 )
 
 ## then for microbeannotator
-mkdir -p Archive/BUTANOATE_MODULE_OUTPUT/MicrobeAnnotator
-mkdir -p Archive/BUTANOATE_MODULE_OUTPUT/MicrobeAnnotator/default
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/MicrobeAnnotator
+mkdir -p ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/MicrobeAnnotator/default
 while read acc; do \
-  anvi-estimate-metabolism --enzymes-txt Archive/enzymes-txt-files/MicrobeAnnotator/default/${acc}_enzymes.txt \
-    -u Butanoate_module/ \
+  anvi-estimate-metabolism --enzymes-txt ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/MicrobeAnnotator/default/${acc}_enzymes.txt \
+    -u $USER_MODULES_FOLDER \
    --only-user-modules \
-   -O Archive/BUTANOATE_MODULE_OUTPUT/MicrobeAnnotator/default/${acc} \
+   -O ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/MicrobeAnnotator/default/${acc} \
    --include-zeros; \
-done < <(tail -n+2 Lachno_genomes.txt | cut -f 11 )
+done < <(tail -n+2 $GENOMES_FILE | cut -f 1 )
 
 # finally, combine the results into one matrix
-python gen_butyrate_matrix.py
+python gen_butyrate_matrix.py $GENOMES_FILE ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/
