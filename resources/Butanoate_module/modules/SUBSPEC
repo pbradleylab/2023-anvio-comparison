@@ -1,0 +1,25 @@
+ENTRY       SUBSPEC
+NAME        Substrate-specific enzymes for butyrate synthesis, acetyl-CoA => butyrate
+DEFINITION  K00626 K00074 K17865,K01715 K03522+K03521+K00248 (K01034,(K00634 K00929))
+ORTHOLOGY   K00626  acetyl-CoA C-acetyltransferase [EC:2.3.1.9]
+            K00074  3-hydroxybutyryl-CoA dehydrogenase [EC:1.1.1.157]
+            K17865  3-hydroxybutyryl-CoA dehydratase [EC:4.2.1.55]
+            K01715  enoyl-CoA hydratase [EC:4.2.1.17]
+            K03522  electron transfer flavoprotein alpha subunit
+            K03521  electron transfer flavoprotein beta subunit
+            K00248  butyryl-CoA dehydrogenase [EC:1.3.8.1]
+            K01034  acetate CoA/acetoacetate CoA-transferase alpha subunit [EC:2.8.3.8 2.8.3.9]
+            K00634  phosphate butyryltransferase [EC:2.3.1.19]
+            K00929  butyrate kinase [EC:2.7.2.7]
+CLASS       User modules; Short-chain Fatty Acid Metabolism; Biosynthesis of SCFAs
+ANNOTATION_SOURCE  K00626  KOfam
+                    K00074  KOfam
+                    K17865  KOfam
+                    K01715  KOfam
+                    K03522  KOfam
+                    K03521  KOfam
+                    K00248  KOfam
+                    K01034  KOfam
+                    K00634  KOfam
+                    K00929  KOfam
+///

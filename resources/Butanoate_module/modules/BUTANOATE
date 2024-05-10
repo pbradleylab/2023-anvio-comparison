@@ -1,0 +1,41 @@
+ENTRY       BUTANOATE
+NAME        Butyrate synthesis, acetyl-CoA => butyrate
+DEFINITION  K00626 (K00022,K07516,K01825,K01782,K07514,K00074) (K01692,K01825,K01782,K07515,K07514,K07511,K01715,K17865) (K17829,K00209,K03522+K03521+K00248) (K01034,(K00634 K00929))
+ORTHOLOGY   K00626  acetyl-CoA C-acetyltransferase [EC:2.3.1.9]
+            K00022,K07516,K01825,K01782,K07514  3-hydroxyacyl-CoA dehydrogenase [EC:1.1.1.35]
+            K00074  3-hydroxybutyryl-CoA dehydrogenase [EC:1.1.1.157]
+            K01692,K01825,K01782,K07515,K07514,K07511,K01715  enoyl-CoA hydratase [EC:4.2.1.17]
+            K17865  3-hydroxybutyryl-CoA dehydratase [EC:4.2.1.55]
+            K17829  crotonyl-CoA reductase [EC:1.3.1.86]
+            K00209  enoyl-[acyl-carrier protein] reductase / trans-2-enoyl-CoA reductase (NAD+) [EC:1.3.1.9 1.3.1.44]
+            K03522  electron transfer flavoprotein alpha subunit
+            K03521  electron transfer flavoprotein beta subunit
+            K00248  butyryl-CoA dehydrogenase [EC:1.3.8.1]
+            K01034  acetate CoA/acetoacetate CoA-transferase alpha subunit [EC:2.8.3.8 2.8.3.9]
+            K00634  phosphate butyryltransferase [EC:2.3.1.19]
+            K00929  butyrate kinase [EC:2.7.2.7]
+CLASS       User modules; Short-chain Fatty Acid Metabolism; Biosynthesis of SCFAs
+ANNOTATION_SOURCE  K00626  KOfam
+                    K00022  KOfam
+                    K07516  KOfam
+                    K01825  KOfam
+                    K01782  KOfam
+                    K07514  KOfam
+                    K00074  KOfam
+                    K01692  KOfam
+                    K01825  KOfam
+                    K01782  KOfam
+                    K07515  KOfam
+                    K07514  KOfam
+                    K07511  KOfam
+                    K17865  KOfam
+                    K01715  KOfam
+                    K17829  KOfam
+                    K00209  KOfam
+                    K03522  KOfam
+                    K03521  KOfam
+                    K00248  KOfam
+                    K01034  KOfam
+                    K00634  KOfam
+                    K00929  KOfam
+///
