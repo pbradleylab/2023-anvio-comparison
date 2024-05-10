@@ -17,12 +17,16 @@ import anvio
 from anvio import kegg
 
 # COMMAND LINE PARAMETERS
+if len(sys.argv) < 4:
+    print("USAGE ERROR: not enough command-line arguments\n" +
+          "python functions_output_to_KEGG_reaactions.py [TARGET_FOLDER(S)] [GENOMES_FILE] [MODULES_DB]")
+    sys.exit(1)
 ## comma-separated list of folders where all functions output is sorted by genome accession
-target_dataset_folders = sys.argv[1] if len(sys.argv) > 1 else "anvio/default/functions"
+target_dataset_folders = sys.argv[1]
 ## file of genome accessions to work with (these accessions are used in the functions file names)
-genome_info_file = sys.argv[2] if len(sys.argv) > 2 else "Lachno_genomes.txt"
+genome_info_file = sys.argv[2]
 ## path to the KEGG modules database generated and used by anvi'o
-mod_db_path = sys.argv[3] if len(sys.argv) > 3 else "/Users/ivvese001/Lab/Collaborations/KatKananen/2023_anvio_comms_paper/240423_data_share/MODULES.db"
+mod_db_path = sys.argv[3]
 
 # METHODS to parse functions output from each tool
 def parse_anvio_functions(file_path):
