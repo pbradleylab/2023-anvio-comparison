@@ -28,6 +28,10 @@ genome_info_file = sys.argv[2]
 ## path to the KEGG modules database generated and used by anvi'o
 mod_db_path = sys.argv[3]
 
+# CONSTANTS
+TOOL_LIST = ['anvio', 'kofamscan', 'MicrobeAnnotator', 'eggnog']
+PARAM_LIST = ['default', 'no_hueristic', 'stray', 'refined']
+
 # METHODS to parse functions output from each tool
 def parse_anvio_functions(file_path):
     """Parses output from anvi-export-functions that is provided via file path. 
@@ -86,12 +90,24 @@ kos_without_reactions = {}
 for tf in target_dataset_list:
     print(f"Parsing modules from input folder............. {tf}")
     path_fields = tf.split('/')
-    tool_string = path_fields[0]
+
+    # find out which tool's output we are processing
+    tool_string = None
+    param_string = None
+    for i,f in enumerate(path_fields):
+        if f in TOOL_LIST:
+            tool_string = f
+        if f in PARAM_LIST:
+            param_string = f
+        
     if tool_string == "eggnog":
         param_string = "default"
-    else:
-        param_string = path_fields[2]
+    
+    if not tool_string or not param_string:
+        print(f"ERROR: cannot parse tool/parameter strings from path {tf}")
+        sys.exit(2)
     print(f"Tool: {tool_string}\nParameter set: {param_string}")
+
     # get list of all KO annotations identified in at least one genome by this tool/param combo
     ko_set = set([])
     for a in acc_list:
