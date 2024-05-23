@@ -56,6 +56,9 @@ clean_an <- function(an){
   an <- an[!str_detect(an$V2, "KEGG_Class"),]
   an <- an[!str_detect(an$V2, "KEGG_Module"),] 
   an$.id <- sub("..$", "", an$.id)
+  an <- an %>% 
+    group_by(.id, V2) %>% 
+    slice_min(V5)
   return(an)
 }
 
@@ -72,6 +75,9 @@ clean_ko <- function(ko){
 clean_ma <- function(ma){
   ma$.id <- sub(".faa.kofam.filt", "", ma$.id)
   ma$.id <- sub("..$", "", ma$.id)
+  ma <- ma %>% 
+    group_by(.id, V1) %>% 
+    slice_min(V6)
   return(ma)
 }
 
