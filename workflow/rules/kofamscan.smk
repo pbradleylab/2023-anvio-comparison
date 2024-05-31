@@ -81,5 +81,5 @@ rule kofam_estimate_metabolism:
     log:"logs/annotation/kofamscan/metabolism/default/{genome}.log"
     shell:
         """
-        anvi-estimate-metabolism -c {input.db} --enzymes-txt {input.enzymes} --kegg-data-dir {input.kofam} -O {params.prefix} 2> {log}
+        anvi-estimate-metabolism --enzymes-txt {input.enzymes} --kegg-data-dir {input.kofam} -O {params.prefix} 2> {log}
         """

@@ -10,7 +10,7 @@ rule microbeannotator:
     output: "results/annotation/microbeAnnotator/functions/default/{genome}/kofam_results/{genome}.faa.kofam.filt"
     params:
         dir=directory("results/annotation/microbeAnnotator/functions/default/{genome}/"),
-        method="diamond"
+        method="blast"
     conda: "../envs/microbeannotator.yml"
     log: "logs/annotation/microbeAnnotator/functions/default/{genome}.log"
     shell:
@@ -28,7 +28,7 @@ rule microbeannotator_refined:
     output: "results/annotation/microbeAnnotator/functions/refined/{genome}/kofam_results/{genome}.faa.kofam.filt"
     params:
         dir=directory("results/annotation/microbeAnnotator/functions/refined/{genome}/"),
-        method="diamond"
+        method="blast"
     conda: "../envs/microbeannotator.yml"
     threads: 40
     log: "logs/annotation/microbeAnnotator/functions/refined/{genome}.log"
@@ -93,7 +93,7 @@ rule microbeannotator_estimate_metabolism:
     log:"logs/annotation/microbeAnnotator/metabolism/default/{genome}.log"
     shell:
         """
-        anvi-estimate-metabolism --include-kos-not-in-kofam -c {input.db} --enzymes-txt {input.enzymes} --kegg-data-dir {input.kofam} -O {params.prefix} 2> {log}
+        anvi-estimate-metabolism --include-kos-not-in-kofam --enzymes-txt {input.enzymes} --kegg-data-dir {input.kofam} -O {params.prefix} 2> {log}
         """
 
 rule create_enzyme_file_microbeannotator_refined:
@@ -121,5 +121,5 @@ rule microbeannotator_estimate_metabolism_refined:
     log:"logs/annotation/microbeAnnotator/metabolism/refined/{genome}.log"
     shell:
         """
-        anvi-estimate-metabolism --include-kos-not-in-kofam -c {input.db} --enzymes-txt {input.enzymes} --kegg-data-dir {input.kofam} -O {params.prefix} 2> {log}
+        anvi-estimate-metabolism --include-kos-not-in-kofam --enzymes-txt {input.enzymes} --kegg-data-dir {input.kofam} -O {params.prefix} 2> {log}
         """
