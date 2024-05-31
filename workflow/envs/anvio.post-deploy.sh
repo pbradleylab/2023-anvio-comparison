@@ -1,4 +1,3 @@
 #!env bash
 
-curl -L https://github.com/merenlab/anvio/releases/download/v8/anvio-8.tar.gz --output /tmp/anvio-8.tar.gz
-pip install /tmp/anvio-8.tar.gz
+pip install -U git+https://github.com/merenlab/anvio@0e01dd715da12899af0d3d014e8e6ee1ded1df0c

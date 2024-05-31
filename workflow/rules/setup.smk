@@ -83,16 +83,8 @@ rule eggnog_bacteria_db:
 
 # Create two separate databases for each version of anvio, one without and one with strays.
 rule anvio_setup_kegg_kofams:
-    output:directory("resources/anvio/no_stray/")
-    conda:"../envs/anvio_stray.yml"
-    threads: 40
-    shell:
-        """
-        anvi-setup-kegg-data -T {threads} --download-from-kegg --kegg-data-dir {output}
-        """
-rule anvio_setup_kegg_stray_kofams:
     output:directory("resources/anvio/stray/")
-    conda:"../envs/anvio_stray.yml"
+    conda:"../envs/anvio.yml"
     threads: 40
     shell:
         """

@@ -97,6 +97,13 @@ rule generate_f1_table:
         #mkdir -p $(dirname {output})
         grep -v "sample_name" /tmp/f1.table > {output}
         """
+# two rules functions_output_to_KEGG_reactions.py takes in comma separated list of input directories
+# file containing accessions of genomes (sent in the genomes) Need subset of Lachno fron pep input file
+# modules db path
+
+# one rule for generation of pathwya
+# need iva's modules (putting them on resources)
+
 
 rule generate_f1a:
     input:

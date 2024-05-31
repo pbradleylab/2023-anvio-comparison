@@ -68,7 +68,7 @@ rule anvio_run_kegg_kofams:
     threads: 40
     shell:
         """
-        anvi-run-kegg-kofams -c {params.db} --kegg-data-dir /home/kananen.13/workflows/2023-anvio-comparison/resources/feb_anvio/no_stray -T {threads} --just-do-it 2> {log}
+        anvi-run-kegg-kofams -c {params.db} --kegg-data-dir {input.kofam} -T {threads} --just-do-it 2> {log}
         touch {output}
         """
 
@@ -108,7 +108,7 @@ rule anvio_export_functions_no_huerestic:
         kegg=rules.anvio_run_kegg_kofams_no_heuristic.output
      output:"results/annotation/anvio/functions/no_hueristic/{genome}.tsv"
      params:
-        db=rules.anvio_gen_contigs_db.output.db
+        db=rules.anvio_gen_contigs_no_heuristic_db.output.db
      conda:"../envs/anvio.yml"
      log: "logs/annotation/anvio/functions/no_hueristic/{genome}.log"
      shell:
@@ -121,7 +121,7 @@ rule anvio_gen_contigs_stray_db:
     output:
         db="results/annotation/anvio/contigs_db/anvio/stray/{genome}/output.db",
         done="results/temporary/anvio/{genome}.anvio_gen_contigs_stray_db"
-    conda:"../envs/anvio_stray.yml"
+    conda:"../envs/anvio.yml"
     log: "logs/annotation/anvio/contigs_db/anvio/stray/{genome}.log"
     params:
         bacteria="{genome}"
@@ -134,11 +134,11 @@ rule anvio_gen_contigs_stray_db:
 rule anvio_run_kegg_kofams_stray:
     input:
         done=rules.anvio_gen_contigs_stray_db.output.done,
-        kofam=rules.anvio_setup_kegg_stray_kofams.output
+        kofam=rules.anvio_setup_kegg_kofams.output
     output:"results/temporary/{genome}/anvio_run_kegg_kofams_stray/anvio_run_kegg_kofams.0"
     params:
        db=rules.anvio_gen_contigs_stray_db.output.db
-    conda:"../envs/anvio_stray.yml"
+    conda:"../envs/anvio.yml"
     log: "logs/annotation/anvio_run_kegg_kofams/stray/{genome}.log"
     threads: 40
     shell:
@@ -154,7 +154,7 @@ rule anvio_export_functions_stray:
      output:"results/annotation/anvio/functions/stray/{genome}.tsv"
      params:
         db=rules.anvio_gen_contigs_stray_db.output.db
-     conda:"../envs/anvio_stray.yml"
+     conda:"../envs/anvio.yml"
      log: "logs/annotation/anvio/functions/stray/{genome}.log"
      shell:
         """
@@ -181,12 +181,12 @@ rule anvio_estimate_metabolism_stray:
     input:
         done=rules.anvio_gen_contigs_stray_db.output.done,
         kegg=rules.anvio_run_kegg_kofams_stray.output,
-        kofam=rules.anvio_setup_kegg_stray_kofams.output
+        kofam=rules.anvio_setup_kegg_kofams.output
     output:"results/annotation/anvio/metabolism/stray/{genome}/anvio_estimate_metabolism_modules.txt"
     params:
         db=rules.anvio_gen_contigs_stray_db.output.db,
         prefix="results/annotation/anvio/metabolism/stray/{genome}/anvio_estimate_metabolism"
-    conda:"../envs/anvio_stray.yml"
+    conda:"../envs/anvio.yml"
     log:"logs/annotation/anvio/metabolism/stray/{genome}.log"
     shell:
         """
@@ -199,7 +199,7 @@ rule anvio_get_sequences_for_gene_calls:
     output:"results/annotation/anvio/get_sequences_for_gene_calls/{genome}.faa"
     params:
         db=rules.anvio_gen_contigs_stray_db.output.db,
-    conda:"../envs/anvio_stray.yml"
+    conda:"../envs/anvio.yml"
     log:"logs/annotation/anvio/get_sequences_for_gene_calls/{genome}.log"
     shell:
         """
