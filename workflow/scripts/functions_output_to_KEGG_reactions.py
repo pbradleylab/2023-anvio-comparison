@@ -29,7 +29,7 @@ genome_info_file = sys.argv[2]
 mod_db_path = sys.argv[3]
 
 # CONSTANTS
-TOOL_LIST = ['anvio', 'kofamscan', 'MicrobeAnnotator', 'eggnog']
+TOOL_LIST = ['anvio', 'kofamscan', 'microbeannotator', 'eggnog']
 PARAM_LIST = ['default', 'no_hueristic', 'stray', 'refined']
 
 # METHODS to parse functions output from each tool
@@ -116,7 +116,7 @@ for tf in target_dataset_list:
             ko_set.update(parse_anvio_functions(func_file_path))
         elif tool_string == 'kofamscan':
             ko_set.update(parse_kofamscan_functions(func_file_path))
-        elif tool_string == "MicrobeAnnotator":
+        elif tool_string == "microbeannotator":
             func_file_path = os.path.join(tf, a, "annotation_results", a + ".faa.annot")
             ko_set.update(parse_microbeannotator_functions(func_file_path))
         elif tool_string == "eggnog":
