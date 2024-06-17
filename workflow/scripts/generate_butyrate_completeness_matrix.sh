@@ -30,32 +30,17 @@ anvi-setup-user-modules -u $USER_MODULES_FOLDER
 # also relies on the input file $GENOMES_FILE containing the accessions of the Lachnospiraceae genomes
 mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files
 
-## first we process the anvi'o files
-mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/anvio
-mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/anvio/default
+# make enzyme-txt input files for each Lachnospiraceae genome (from each annotation tool)
+for tool in anvio kofamscan microbeannotator; do \
+  echo "Generating enzymes-txt files from $tool annotations for Lachnospiraceae genomes...."; \
+  mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/$tool
+  mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/$tool/default
 while read acc; do \
-  python functions_output_to_enzymes_txt.py ${FUNCTIONS_OUTPUT_DIR}/anvio/functions/default/${acc}.tsv \
-    ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/anvio/default/${acc}_enzymes.txt \
-    anvio; \
-done < <(tail -n+2 $GENOMES_FILE | cut -f 1 )
-
-## then kofamscan files
-mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/kofamscan
-mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/kofamscan/default
-while read acc; do \
-  python functions_output_to_enzymes_txt.py ${FUNCTIONS_OUTPUT_DIR}/kofamscan/functions/default/${acc}.tsv \
-    ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/kofamscan/default/${acc}_enzymes.txt \
-    kofamscan; \
-done < <(tail -n+2 $GENOMES_FILE | cut -f 1 )
-
-## then MicrobeAnnotator files
-mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/MicrobeAnnotator
-mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/MicrobeAnnotator/default
-while read acc; do \
-  python functions_output_to_enzymes_txt.py ${FUNCTIONS_OUTPUT_DIR}/MicrobeAnnotator/functions/default/${acc}/annotation_results/${acc}.faa.annot \
-    ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/MicrobeAnnotator/default/${acc}_enzymes.txt \
-    MicrobeAnnotator; \
-done < <(tail -n+2 $GENOMES_FILE | cut -f 1 )
+    python ${SCRIPT_DIR}/functions_output_to_enzymes_txt.py ${FUNCTIONS_OUTPUT_DIR}/$tool/functions/default/${acc}.tsv \
+      ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/$tool/default/${acc}_enzymes.txt \
+      $tool; \
+  done < <(tail -n+2 $GENOMES_FILE | cut -f 1 ); \
+done
 
 # estimate completeness of the pathway
 ## first for anvi'o
