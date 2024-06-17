@@ -94,6 +94,7 @@ target_dataset_list = target_dataset_folders.split(",")
 ko_annotations = {tf: set([])  for tf in target_dataset_list}
 reaction_dict = {}
 kos_without_reactions = {}
+kos_with_reactions = {}
 
 for tf in target_dataset_list:
     print(f"Parsing modules from input folder............. {tf}")
@@ -147,6 +148,11 @@ for tf in target_dataset_list:
             else:
                 kos_without_reactions[k] = {annotation_string: True}
             continue
+        else:
+            if k in kos_with_reactions:
+                kos_with_reactions[k][annotation_string] = True
+            else:
+                kos_with_reactions[k] = {annotation_string: True}
         for r in r_list:
             r_acc = r.replace("RN", "rn"); # make it compatible with the lowercase reaction IDs in the tbl_graph in R
             if r_acc in reaction_dict:
@@ -174,3 +180,11 @@ kdf.fillna(False, inplace=True)
 k_output_file = f"combined_kos_without_reaction.txt"
 kdf.to_csv(k_output_file, sep="\t")
 print(f"Output for KOs without associated reactions............. {k_output_file}")
+
+# all KOs (those that have associated KEGG reactions plus those that don't)
+akdf = pd.DataFrame(dict(kos_with_reactions, **kos_without_reactions)).T
+akdf.index.rename('KO', inplace=True)
+akdf.fillna(False, inplace=True)
+ak_output_file = f"combined_kos_all.txt"
+akdf.to_csv(ak_output_file, sep="\t")
+print(f"Output for all KO annotations............. {ak_output_file}")
