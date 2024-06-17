@@ -34,3 +34,8 @@ for mod in module_list:
 
   completeness_matrix.index.name = "genome"
   completeness_matrix.to_csv(f"{mod}_completeness_matrix.txt", sep="\t")
+  # make version of matrix with genomes labeled by species
+  if "species" in genome_info.columns:
+    acc_to_species = {acc: genome_info.loc[acc, "species"].replace("s__", "") + f"  ({acc})" for acc in genome_info.index}
+    completeness_matrix.rename(acc_to_species, inplace=True)
+    completeness_matrix.to_csv(f"{mod}_completeness_matrix_labeled.txt", sep="\t")
