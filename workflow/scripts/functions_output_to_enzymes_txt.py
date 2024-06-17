@@ -27,15 +27,22 @@ else:
 
 # METHODS to convert functions output from each tool type into an enzymes-txt table
 # each method accepts a file path to the functions output as input and returns a pandas DataFrame
-def convert_anvio(file):
+# for anvi'o and kofamscan, you can also choose whether to keep all hits or just the best one per gene call
+def convert_anvio(file, keep_best_hit_per_gene=True):
     df = pd.read_csv(file, sep="\t")
+    if keep_best_hit_per_gene:
+        # keep hit with lowest e-value per gene
+        df.sort_values('e_value').drop_duplicates('gene_callers_id', keep='first')
     enzymes_df = df[['gene_callers_id', 'accession', 'source']]
     enzymes_df.columns = ['gene_id', 'enzyme_accession', 'source']
     return enzymes_df
 
-def convert_kofamscan(file):
+def convert_kofamscan(file, keep_best_hit_per_gene=True):
     df = pd.read_csv(file, sep="\t", comment="#", \
                      names = ['passes_threshold','gene','KO','thrshld','score','evalue','definition'])
+    if keep_best_hit_per_gene:
+        # keep hit with lowest e-value per gene
+        df.sort_values('evalue').drop_duplicates('gene', keep='first')
     enzymes_df = df[df.passes_threshold == "*"][['gene','KO']]
     enzymes_df["source"] = "KOfam"
     enzymes_df.columns = ['gene_id', 'enzyme_accession', 'source']
