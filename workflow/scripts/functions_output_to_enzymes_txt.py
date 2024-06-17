@@ -54,7 +54,7 @@ if tool == 'anvio':
     enzymes_df = convert_anvio(input_functions_file)
 elif tool == 'kofamscan':
     enzymes_df = convert_kofamscan(input_functions_file)
-elif tool == "MicrobeAnnotator":
+elif tool == "microbeannotator":
     enzymes_df = convert_microbeannotator(input_functions_file)
 else:
     print(f"ERROR. No function defined for processing tool '{tool}'.")
