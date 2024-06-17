@@ -3,12 +3,15 @@
 #   using input annotation sets from each annotation tool
 # designed to work with the output of the Snakemake workflow
 # creates a matrix of the results wherein each row describes a genome and each column describes an annotation tool
-
+# USAGE: bash generate_butyrate_completeness_matrix.sh FOLDER_OF_ANNOTATION_DATA
+# the only argument to this script should be the folder where your annotation data is stored, organized by annotation tool
 
 # INPUT VARIABLES
-USER_MODULES_FOLDER="Butanoate_module/"
-FUNCTIONS_OUTPUT_DIR="Archive"
-GENOMES_FILE="lachno.tsv"
+if [ -z "$1" ]; then
+  echo "ERROR. Must provide input folder with annotation data as the first argument to this script."
+  exit 1
+fi
+FUNCTIONS_OUTPUT_DIR=$1
 
 # create user-defined modules database with the butyrate biosynthesis module
 # modules file must be stored at this relative path: `${USER_MODULES_FOLDER}/modules/BUTANOATE``
