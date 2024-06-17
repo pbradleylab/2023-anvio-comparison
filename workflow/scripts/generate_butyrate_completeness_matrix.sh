@@ -15,8 +15,8 @@ FUNCTIONS_OUTPUT_DIR=$1
 
 # INPUT DATA
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) # location of the current script
-USER_MODULES_FOLDER="${SCRIPT_DIR}/resources/Butanoate_module/"
-GENOMES_FILE="${SCRIPT_DIR}/resources/lachno.tsv"
+USER_MODULES_FOLDER="${SCRIPT_DIR}/../../resources/Butanoate_module/"
+GENOMES_FILE="${SCRIPT_DIR}/../../resources/lachno.tsv"
 
 # create user-defined modules database with the butyrate biosynthesis module
 # modules file must be stored at this relative path: `${USER_MODULES_FOLDER}/modules/BUTANOATE``
