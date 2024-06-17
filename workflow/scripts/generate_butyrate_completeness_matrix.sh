@@ -48,7 +48,7 @@ done
 
 # estimate completeness of the butyrate biosynthesis pathways
 for tool in anvio kofamscan microbeannotator; do \
-  echo "Estimating butyrate metabolism from $tool annotations for Lachnospiraceae genomes...."; \
+  echo "Estimating butyrate metabolism from $tool annotations for Lachnospiraceae genomes...."
   mkdir -p ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT
   mkdir -p ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/$tool
   mkdir -p ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/$tool/default
@@ -57,8 +57,8 @@ for tool in anvio kofamscan microbeannotator; do \
       -u $USER_MODULES_FOLDER \
     --only-user-modules \
     -O ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/$tool/default/${acc} \
-    --include-zeros; \
-  done < <(tail -n+2 $GENOMES_FILE | cut -f 1 ); \
+    --include-zeros
+  done < <(tail -n+2 $GENOMES_FILE | cut -f 1 )
 done
 
 # finally, combine the results into one matrix
