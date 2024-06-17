@@ -6,6 +6,9 @@
 # USAGE: bash generate_butyrate_completeness_matrix.sh FOLDER_OF_ANNOTATION_DATA
 # the only argument to this script should be the folder where your annotation data is stored, organized by annotation tool
 
+# exit upon error
+set -e
+
 # INPUT VARIABLES
 if [ -z "$1" ]; then
   echo "ERROR. Must provide input folder with annotation data as the first argument to this script."
