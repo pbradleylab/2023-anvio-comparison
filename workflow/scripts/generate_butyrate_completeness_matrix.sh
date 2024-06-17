@@ -62,4 +62,4 @@ for tool in anvio kofamscan microbeannotator; do \
 done
 
 # finally, combine the results into one matrix
-python gen_butyrate_matrix.py $GENOMES_FILE ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/
+python ${SCRIPT_DIR}/gen_butyrate_matrix.py $GENOMES_FILE ${FUNCTIONS_OUTPUT_DIR}/BUTANOATE_MODULE_OUTPUT/
