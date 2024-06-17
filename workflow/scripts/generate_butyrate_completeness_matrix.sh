@@ -32,14 +32,18 @@ mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files
 
 # make enzyme-txt input files for each Lachnospiraceae genome (from each annotation tool)
 for tool in anvio kofamscan microbeannotator; do \
-  echo "Generating enzymes-txt files from $tool annotations for Lachnospiraceae genomes...."; \
+  echo "Generating enzymes-txt files from $tool annotations for Lachnospiraceae genomes...."
   mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/$tool
   mkdir -p ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/$tool/default
   while read acc; do \
-    python ${SCRIPT_DIR}/functions_output_to_enzymes_txt.py ${FUNCTIONS_OUTPUT_DIR}/$tool/functions/default/${acc}.tsv \
+    IN="${FUNCTIONS_OUTPUT_DIR}/$tool/functions/default/${acc}.tsv"
+    if [ "$tool" == "microbeannotator" ]; then 
+      IN="${FUNCTIONS_OUTPUT_DIR}/$tool/functions/default/${acc}/annotation_results/${acc}.faa.annot"
+    fi
+    python ${SCRIPT_DIR}/functions_output_to_enzymes_txt.py $IN \
       ${FUNCTIONS_OUTPUT_DIR}/enzymes-txt-files/$tool/default/${acc}_enzymes.txt \
-      $tool; \
-  done < <(tail -n+2 $GENOMES_FILE | cut -f 1 ); \
+      $tool
+  done < <(tail -n+2 $GENOMES_FILE | cut -f 1 )
 done
 
 # estimate completeness of the butyrate biosynthesis pathways
