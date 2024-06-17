@@ -1,37 +1,37 @@
-sample_name	gtdb_family
-GCA_000437415.1	Lachnospiraceae
-GCA_001517465.1	Lachnospiraceae
-GCA_003448625.1	Lachnospiraceae
-GCA_003520865.1	Lachnospiraceae
-GCA_003612355.1	Lachnospiraceae
-GCA_014799405.1	Lachnospiraceae
-GCA_017503735.1	Lachnospiraceae
-GCA_017516285.1	Lachnospiraceae
-GCA_017550425.1	Lachnospiraceae
-GCA_017936785.1	Lachnospiraceae
-GCA_017995395.1	Lachnospiraceae
-GCA_019113645.1	Lachnospiraceae
-GCA_022769625.1	Lachnospiraceae
-GCA_022796695.1	Lachnospiraceae
-GCA_022800085.1	Lachnospiraceae
-GCA_022800895.1	Lachnospiraceae
-GCA_022802035.1	Lachnospiraceae
-GCA_024403285.1	Lachnospiraceae
-GCA_024403635.1	Lachnospiraceae
-GCA_024690985.1	Lachnospiraceae
-GCA_024694135.1	Lachnospiraceae
-GCA_024698965.1	Lachnospiraceae
-GCA_024699045.1	Lachnospiraceae
-GCF_000424525.1	Lachnospiraceae
-GCF_002735565.1	Lachnospiraceae
-GCF_003464645.1	Lachnospiraceae
-GCF_003477865.1	Lachnospiraceae
-GCF_005886215.1	Lachnospiraceae
-GCF_009718155.1	Lachnospiraceae
-GCF_015668165.1	Lachnospiraceae
-GCF_018919065.1	Lachnospiraceae
-GCF_020537465.1	Lachnospiraceae
-GCF_022174665.1	Lachnospiraceae
-GCF_024464735.1	Lachnospiraceae
-GCF_900100685.1	Lachnospiraceae
-GCF_900240315.1	Lachnospiraceae
+sample_name	gtdb_family	species
+GCA_000437415.1	Lachnospiraceae	Blautia_A massiliensis
+GCA_001517465.1	Lachnospiraceae	Enterocloster clostridioformis
+GCA_003448625.1	Lachnospiraceae	Eubacterium_I sp000270305
+GCA_003520865.1	Lachnospiraceae	Dorea_A longicatena
+GCA_003612355.1	Lachnospiraceae	Butyribacter sp003611745
+GCA_014799405.1	Lachnospiraceae	Wujia sp014799405
+GCA_017503735.1	Lachnospiraceae	SIG307 sp017503735
+GCA_017516285.1	Lachnospiraceae	RGIG6307 sp017516285
+GCA_017550425.1	Lachnospiraceae	UBA1201 sp017550425
+GCA_017936785.1	Lachnospiraceae	UBA2882 sp017936785
+GCA_017995395.1	Lachnospiraceae	Acetatifactor sp900066565
+GCA_019113645.1	Lachnospiraceae	Mediterraneibacter vanvlietii
+GCA_022769625.1	Lachnospiraceae	Hominisplanchenecus sp022769625
+GCA_022796695.1	Lachnospiraceae	UBA3402 sp910588865
+GCA_022800085.1	Lachnospiraceae	COE1 sp009774395
+GCA_022800895.1	Lachnospiraceae	UBA3402 sp910588865
+GCA_022802035.1	Lachnospiraceae	UBA3402 sp910588865
+GCA_024403285.1	Lachnospiraceae	UBA3766 sp024403285
+GCA_024403635.1	Lachnospiraceae	RGIG5612 sp024403635
+GCA_024690985.1	Lachnospiraceae	Eubacterium_Q sp902777655
+GCA_024694135.1	Lachnospiraceae	NK4A136 sp000421045
+GCA_024698965.1	Lachnospiraceae	RUG14243 sp024698965
+GCA_024699045.1	Lachnospiraceae	NK4A144 sp024699045
+GCF_000424525.1	Lachnospiraceae	Butyrivibrio sp000421405
+GCF_002735565.1	Lachnospiraceae	Pseudobutyrivibrio sp900112855
+GCF_003464645.1	Lachnospiraceae	Blautia_A obeum
+GCF_003477865.1	Lachnospiraceae	Fusicatenibacter saccharivorans
+GCF_005886215.1	Lachnospiraceae	Hungatella_A hathewayi_A
+GCF_009718155.1	Lachnospiraceae	Mediterraneibacter torques
+GCF_015668165.1	Lachnospiraceae	Blautia_A wexlerae
+GCF_018919065.1	Lachnospiraceae	Blautia_A sp018919065
+GCF_020537465.1	Lachnospiraceae	Blautia_A faecis
+GCF_022174665.1	Lachnospiraceae	Wujia sp022174665
+GCF_024464735.1	Lachnospiraceae	Mediterraneibacter torques
+GCF_900100685.1	Lachnospiraceae	Enterocloster clostridioformis
+GCF_900240315.1	Lachnospiraceae	Dorea_B phocaeensis
