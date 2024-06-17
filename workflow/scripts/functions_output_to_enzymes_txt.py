@@ -30,9 +30,10 @@ else:
 # for anvi'o and kofamscan, you can also choose whether to keep all hits or just the best one per gene call
 def convert_anvio(file, keep_best_hit_per_gene=True):
     df = pd.read_csv(file, sep="\t")
+    df = df[df.source == 'KOfam']
     if keep_best_hit_per_gene:
         # keep hit with lowest e-value per gene
-        df.sort_values('e_value').drop_duplicates('gene_callers_id', keep='first')
+        df = df.sort_values('e_value').drop_duplicates('gene_callers_id', keep='first')
     enzymes_df = df[['gene_callers_id', 'accession', 'source']]
     enzymes_df.columns = ['gene_id', 'enzyme_accession', 'source']
     return enzymes_df
@@ -40,10 +41,11 @@ def convert_anvio(file, keep_best_hit_per_gene=True):
 def convert_kofamscan(file, keep_best_hit_per_gene=True):
     df = pd.read_csv(file, sep="\t", comment="#", \
                      names = ['passes_threshold','gene','KO','thrshld','score','evalue','definition'])
+    df = df[df.passes_threshold == "*"]
     if keep_best_hit_per_gene:
         # keep hit with lowest e-value per gene
-        df.sort_values('evalue').drop_duplicates('gene', keep='first')
-    enzymes_df = df[df.passes_threshold == "*"][['gene','KO']]
+        df = df.sort_values('evalue').drop_duplicates('gene', keep='first')
+    enzymes_df = df[['gene','KO']]
     enzymes_df["source"] = "KOfam"
     enzymes_df.columns = ['gene_id', 'enzyme_accession', 'source']
     return enzymes_df
