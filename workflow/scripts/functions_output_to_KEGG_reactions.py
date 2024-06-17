@@ -33,15 +33,19 @@ TOOL_LIST = ['anvio', 'kofamscan', 'microbeannotator', 'eggnog']
 PARAM_LIST = ['default', 'no_hueristic', 'stray', 'refined']
 
 # METHODS to parse functions output from each tool
-def parse_anvio_functions(file_path):
+def parse_anvio_functions(file_path, keep_best_hit_per_gene=True):
     """Parses output from anvi-export-functions that is provided via file path. 
        Returns set of unique KO annotations identified by the tool.
     """
 
     df = pd.read_csv(file_path, sep="\t")
-    return set(df[df.source == 'KOfam'].accession)
+    df = df[df.source == 'KOfam']
+    if keep_best_hit_per_gene:
+        # keep hit with lowest e-value per gene
+        df = df.sort_values('e_value').drop_duplicates('gene_callers_id', keep='first')
+    return set(df.accession)
 
-def parse_kofamscan_functions(file_path):
+def parse_kofamscan_functions(file_path, keep_best_hit_per_gene=True):
     """Parses 'detail-tsv' format output from kofamscan that is provided via file path.
        Returns set of unique KO annotations identified by the tool. Only returns those KOs whose bitscore was higher
        than the threshold (asterisk in first column of table).
@@ -49,7 +53,11 @@ def parse_kofamscan_functions(file_path):
 
     df = pd.read_csv(file_path, sep="\t", comment="#", \
                      names = ['passes_threshold','gene','KO','thrshld','score','evalue','definition'])
-    return set(df[df.passes_threshold == "*"].KO)
+    df = df[df.passes_threshold == "*"]
+    if keep_best_hit_per_gene:
+        # keep hit with lowest e-value per gene
+        df = df.sort_values('evalue').drop_duplicates('gene', keep='first')
+    return set(df.KO)
 
 def parse_microbeannotator_functions(file_path):
     """Parses the *.faa.annot output from MicrobeAnnotator that is provided via file path.
