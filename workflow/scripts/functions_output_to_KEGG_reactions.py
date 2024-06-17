@@ -19,7 +19,7 @@ from anvio import kegg
 # COMMAND LINE PARAMETERS
 if len(sys.argv) < 4:
     print("USAGE ERROR: not enough command-line arguments\n" +
-          "python functions_output_to_KEGG_reaactions.py [TARGET_FOLDER(S)] [GENOMES_FILE] [MODULES_DB]")
+          "python functions_output_to_KEGG_reactions.py [TARGET_FOLDER(S)] [GENOMES_FILE] [MODULES_DB]")
     sys.exit(1)
 ## comma-separated list of folders where all functions output is sorted by genome accession
 target_dataset_folders = sys.argv[1]
