@@ -154,9 +154,9 @@ sf1 <- median_cmp_per_family_long %>%
   geom_abline(slope=1,intercept=0,lty=2,col="#AAAAAA") + facet_wrap(~ family) + 
   theme_minimal() + scale_color_manual(values=c(anvio="#2A9D8F", ma="#6DB9E4"), 
                                        labels = c("ma" = "MicrobeAnnotator", "anvio" = "anvi'o")) +
-  labs(title = "Module Completeness of Methods over Kofamscan by Family", 
-       x = "Pathwise-Completeness (other Kofamscan)", 
-       y = "Pathwise-Completeness (other method)",
+  labs(title = "Module Completeness by Family", 
+       x = "Module Completeness (other Kofamscan)", 
+       y = "Module Completeness (other method)",
        color = "Method")
 
 # Calculate difference in modules found for anvio vs kofamscan and anvio vs
