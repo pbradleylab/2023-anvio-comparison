@@ -4,6 +4,8 @@ library(reshape2)
 library(patchwork)
 library(plyr)
 library(tidyverse)
+library(rstatix)
+library(ggpubr)
 
 
 make_linker <- function(path){
@@ -57,7 +59,7 @@ clean_an <- function(an){
   an <- an[!str_detect(an$V2, "KEGG_Module"),] 
   an$.id <- sub("..$", "", an$.id)
   an <- an %>% 
-    group_by(.id, V2) %>% 
+    group_by(.id, V1) %>% 
     slice_min(V5)
   return(an)
 }
@@ -89,6 +91,27 @@ check_ko <- function(text, ko_needed) {
   all(str_detect(text, ko_needed))
 }
 
+count_function <- function(data) {
+  table(data$.id)
+}
+
+get_aggregation <- function(colname1, colname2, df1, df2, name, stats){
+  # Create a data frame for the counts
+  count1 <- count_function(df1)
+  count2 <- count_function(df2)
+  tmp <- data.frame(.id = unique(c(names(count1), names(count2))),
+                    colname1 = count1[match(unique(c(names(count1), names(count2))), names(count1))],
+                    colname2 = count2[match(unique(c(names(count1), names(count2))), names(count2))])
+  tmp[is.na(tmp)] <- 0
+  
+  # Calculate the increase and add to stats
+  stats[[name]] <- ((tmp$colname1.Freq - tmp$colname2.Freq) / tmp$colname2.Freq)
+  stats <- merge(stats, tmp[c("colname1.Freq", ".id")])
+  stats <- merge(stats, tmp[c("colname2.Freq", ".id")])
+  names(stats)[which(names(stats) == "colname1")] <- colname1
+  names(stats)[which(names(stats) == "colname2")] <- colname2
+  return(stats)
+}
 
 # Set 11 families we are interested in
 family <- c("Bacteroidaceae","Nanosynbacteraceae", "Streptococcaceae",
@@ -116,7 +139,7 @@ mare <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/microbeAnnotator
 # Read in Anvio raw, stray, and no recovery files
 anra <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/anvio/functions/default/", "anvio")
 anst <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/anvio/functions/stray/", "anvio")
-annr <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/anvio/functions/no_hueristic/", "anvio")
+annr <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/anvio/functions/no_heuristic/", "anvio")
 
 # Clean up anvi'o and kofamscan output
 # Here we need to make three versions of kofam in the cleaning process for later comparisons
@@ -141,35 +164,28 @@ annr_sub <- annr[c(".id", "V1", "V3", "V5")]; colnames(annr_sub) <- c(".id", "V1
 anst_sub <- anst[c(".id", "V1", "V3", "V5")]; colnames(anst_sub) <- c(".id", "V1", "anst", "anst_eval")
 mara_sub <- mara[c(".id", "V1", "V3", "V6")]; colnames(mara_sub) <- c(".id", "V1", "mara", "mara_eval")
 mare_sub <- mare[c(".id", "V1", "V3", "V6")]; colnames(mare_sub) <- c(".id", "V1", "mare", "mare_eval")
-# Make one dataframe we will work with for simplicity
-all <- merge(merge(merge(merge(merge(merge(kora_sub, mara_sub, by=c(".id", "V1"), all=TRUE), 
-                                     anra_sub, by=c(".id", "V1"), all=TRUE), 
-                               kore_sub, by=c(".id", "V1"), all=TRUE), 
-                         mare_sub, by=c(".id", "V1"), all=TRUE),
-                   annr_sub, by=c(".id", "V1"), all=TRUE),
-             anst_sub, by=c(".id", "V1"), all=TRUE)
 
 # Calculate the eggnog hits that match
 # Kofamscan default
-eggnog_kora <- unique(merge(all[c(".id", "V1", "kora")], eggnog, by=c(".id", "V1")))
+eggnog_kora <- unique(merge(kora_sub[c(".id", "V1", "kora")], eggnog, by=c(".id", "V1")))
 eggnog_kora <- eggnog_kora[str_detect(eggnog_kora$V12, eggnog_kora$kora), ]
 # Kofamscan refined
-eggnog_kore <- unique(merge(all[c(".id", "V1", "kore")], eggnog, by=c(".id", "V1")))
+eggnog_kore <- unique(merge(kore_sub[c(".id", "V1", "kore")], eggnog, by=c(".id", "V1")))
 eggnog_kore <- eggnog_kore[str_detect(eggnog_kore$V12, eggnog_kore$kore), ]
 # MicrobeAnnotator default
-eggnog_mara <- unique(merge(all[c(".id", "V1", "mara")], eggnog, by=c(".id", "V1")))
+eggnog_mara <- unique(merge(mara_sub[c(".id", "V1", "mara")], eggnog, by=c(".id", "V1")))
 eggnog_mara <- eggnog_mara[str_detect(eggnog_mara$V12, eggnog_mara$mara), ]
 # MicrobeAnnotator refined
-eggnog_mare <- unique(merge(all[c(".id", "V1", "mare")], eggnog, by=c(".id", "V1")))
+eggnog_mare <- unique(merge(mare_sub[c(".id", "V1", "mare")], eggnog, by=c(".id", "V1")))
 eggnog_mare <- eggnog_mare[str_detect(eggnog_mare$V12, eggnog_mare$mare), ]
 # Anvio default
-eggnog_anra <- unique(merge(all[c(".id", "V1", "anra")], eggnog, by=c(".id", "V1")))
+eggnog_anra <- unique(merge(anra_sub[c(".id", "V1", "anra")], eggnog, by=c(".id", "V1")))
 eggnog_anra <- eggnog_anra[str_detect(eggnog_anra$V12, eggnog_anra$anra), ]
-# Anvio no Hueristic
-eggnog_annr <- unique(merge(all[c(".id", "V1", "annr")], eggnog, by=c(".id", "V1")))
+# Anvio no heuristic
+eggnog_annr <- unique(merge(annr_sub[c(".id", "V1", "annr")], eggnog, by=c(".id", "V1")))
 eggnog_annr <- eggnog_annr[str_detect(eggnog_annr$V12, eggnog_annr$annr), ]
 # Anvio stray
-eggnog_anst <- unique(merge(all[c(".id", "V1", "anst")], eggnog, by=c(".id", "V1")))
+eggnog_anst <- unique(merge(anst_sub[c(".id", "V1", "anst")], eggnog, by=c(".id", "V1")))
 eggnog_anst <- eggnog_anst[str_detect(eggnog_anst$V12, eggnog_anst$anst), ]
 
 eggnog_kora <- eggnog_kora[complete.cases(eggnog_kora$.id), ]
@@ -183,33 +199,96 @@ eggnog_anst <- eggnog_anst[complete.cases(eggnog_anst$.id), ]
 # Calculate statistics needed for paper
 stats <- orfs[c("accession", "number_genes")]; colnames(stats) <- c(".id", "num_ORFs")
 # Percentage change for kofamscan refined and kofamscan default
-stats$kore_increase_kora <- ((aggregate(kore ~ .id, data = all[c(".id", "V1", "kore")][complete.cases(all[c(".id", "V1", "kore")]),], FUN = function(x) length(x))$kore -
-                               aggregate(kora ~ .id, data = all[c(".id", "V1", "kora")][complete.cases(all[c(".id", "V1", "kora")]),], FUN = function(x) length(x))$kora) /
-                             aggregate(kora ~ .id, data = all[c(".id", "V1", "kora")][complete.cases(all[c(".id", "V1", "kora")]),], FUN = function(x) length(x))$kora)
-stats$kore_increase_kora_valid <- ((aggregate(kore ~ .id, data = eggnog_kore[c(".id", "V1", "kore")][complete.cases(eggnog_kore[c(".id", "V1", "kore")]),], FUN = function(x) length(x))$kore - 
-                                      aggregate(kora ~ .id, data = eggnog_kora[c(".id", "V1", "kora")][complete.cases(eggnog_kora[c(".id", "V1", "kora")]),], FUN = function(x) length(x))$kora) / 
-                                     aggregate(kora ~ .id, data = eggnog_kora[c(".id", "V1", "kora")][complete.cases(eggnog_kora[c(".id", "V1", "kora")]),], FUN = function(x) length(x))$kora)
+stats <- merge(stats, get_aggregation("kore","kora", kore_sub, kora_sub, "kore_increase_kora", stats), by = c(".id", "num_ORFs"), all=TRUE)
+names(stats)[names(stats) == 'colname1.Freq'] <- 'kore'
+names(stats)[names(stats) == 'colname2.Freq'] <- 'kora'
+stats <- merge(stats, get_aggregation("kore_valid","kora_valid", eggnog_kore, eggnog_kora, "kore_increase_kora_valid", stats), all=TRUE)
+names(stats)[names(stats) == 'colname1.Freq'] <- 'kore_valid'
+names(stats)[names(stats) == 'colname2.Freq'] <- 'kora_valid'
 # Percentage change for MicrobeAnnotator refined and MicrobeAnnotator default
-stats$mare_increase_mara <- ((aggregate(mare ~ .id, data = all[c(".id", "V1", "mare")][complete.cases(all[c(".id", "V1", "mare")]),], FUN = function(x) length(x))$mare -
-                                    aggregate(mara ~ .id, data = all[c(".id", "V1", "mara")][complete.cases(all[c(".id", "V1", "mara")]),], FUN = function(x) length(x))$mara) /
-                                   aggregate(mara ~ .id, data = all[c(".id", "V1", "mara")][complete.cases(all[c(".id", "V1", "mara")]),], FUN = function(x) length(x))$mara)
-stats$mare_increase_mara_valid <- ((aggregate(mare ~ .id, data = eggnog_mare[c(".id", "V1", "mare")][complete.cases(eggnog_mare[c(".id", "V1", "mare")]),], FUN = function(x) length(x))$mare - 
-                                      aggregate(mara ~ .id, data = eggnog_mara[c(".id", "V1", "mara")][complete.cases(eggnog_mara[c(".id", "V1", "mara")]),], FUN = function(x) length(x))$mara) /
-                                     aggregate(mara ~ .id, data = eggnog_mara[c(".id", "V1", "mara")][complete.cases(eggnog_mara[c(".id", "V1", "mara")]),], FUN = function(x) length(x))$mara)
-# Percentage change for anvi'o default and anvi'o no Hueristic
-stats$anra_increase_annr <- ((aggregate(anra ~ .id, data = all[c(".id", "V1", "anra")][complete.cases(all[c(".id", "V1", "anra")]),], FUN = function(x) length(x))$anra -
-                                aggregate(annr ~ .id, data = all[c(".id", "V1", "annr")][complete.cases(all[c(".id", "V1", "annr")]),], FUN = function(x) length(x))$annr) /
-                               aggregate(annr ~ .id, data = all[c(".id", "V1", "annr")][complete.cases(all[c(".id", "V1", "annr")]),], FUN = function(x) length(x))$annr)
-stats$anra_increase_annr_valid <- ((aggregate(anra ~ .id, data = eggnog_anra[c(".id", "V1", "anra")][complete.cases(eggnog_anra[c(".id", "V1", "anra")]),], FUN = function(x) length(x))$anra - 
-                                      aggregate(annr ~ .id, data = eggnog_annr[c(".id", "V1", "annr")][complete.cases(eggnog_annr[c(".id", "V1", "annr")]),], FUN = function(x) length(x))$annr) /
-                                     aggregate(annr ~ .id, data = eggnog_annr[c(".id", "V1", "annr")][complete.cases(eggnog_annr[c(".id", "V1", "annr")]),], FUN = function(x) length(x))$annr)
+stats <- merge(stats, get_aggregation("mare","mara", mare_sub, mara_sub, "mare_increase_mara", stats), all=TRUE)
+names(stats)[names(stats) == 'colname1.Freq'] <- 'mare'
+names(stats)[names(stats) == 'colname2.Freq'] <- 'mara'
+stats <- merge(stats, get_aggregation("mare_valid","mara_valid", eggnog_mare, eggnog_mara, "mare_increase_mara_valid", stats), all=TRUE)
+names(stats)[names(stats) == 'colname1.Freq'] <- 'mare_valid'
+names(stats)[names(stats) == 'colname2.Freq'] <- 'mara_valid'
+# Percentage change for anvi'o default and anvi'o no heuristic
+stats <- merge(stats, get_aggregation("anra","annr", anra_sub, annr_sub, "anra_increase_annr", stats), all=TRUE)
+names(stats)[names(stats) == 'colname1.Freq'] <- 'anra'
+names(stats)[names(stats) == 'colname2.Freq'] <- 'annr'
+stats <- merge(stats, get_aggregation("anra_valid","annr_valid", eggnog_anra, eggnog_annr, "anra_increase_annr_valid", stats), all=TRUE)
+names(stats)[names(stats) == 'colname1.Freq'] <- 'anra_valid'
+names(stats)[names(stats) == 'colname2.Freq'] <- 'annr_valid'
 # Percentage change for anvi'o stray and anvi'o default
-stats$anst_increase_anra <- ((aggregate(anst ~ .id, data = all[c(".id", "V1", "anst")][complete.cases(all[c(".id", "V1", "anst")]),], FUN = function(x) length(x))$anst -
-                                aggregate(anra ~ .id, data = all[c(".id", "V1", "anra")][complete.cases(all[c(".id", "V1", "anra")]),], FUN = function(x) length(x))$anra) /
-                               aggregate(anra ~ .id, data = all[c(".id", "V1", "anra")][complete.cases(all[c(".id", "V1", "anra")]),], FUN = function(x) length(x))$anra)
-stats$anst_increase_anra_valid <- ((aggregate(anst ~ .id, data = eggnog_anst[c(".id", "V1", "anst")][complete.cases(eggnog_anst[c(".id", "V1", "anst")]),], FUN = function(x) length(x))$anst - 
-                                      aggregate(anra ~ .id, data = eggnog_anra[c(".id", "V1", "anra")][complete.cases(eggnog_anra[c(".id", "V1", "anra")]),], FUN = function(x) length(x))$anra) /
-                                     aggregate(anra ~ .id, data = eggnog_anra[c(".id", "V1", "anra")][complete.cases(eggnog_anra[c(".id", "V1", "anra")]),], FUN = function(x) length(x))$anra)
+stats <- merge(stats, get_aggregation("anst","anra", anst_sub, anra_sub, "anst_increase_anra", stats)[c(".id","colname1.Freq")], all=TRUE)
+names(stats)[names(stats) == 'colname1.Freq'] <- 'anst'
+stats <- merge(stats, get_aggregation("anst_valid","anra_valid", eggnog_anst, eggnog_anra, "anst_increase_anra_valid", stats)[c(".id","colname1.Freq")], all=TRUE)
+names(stats)[names(stats) == 'colname1.Freq'] <- 'anst_valid'
+
+# Calculate the average for each increase or decrease
+print(paste("anra increase from annr:", sum(stats$anra_increase_annr)/nrow(stats)))
+print(paste("anra min increase from annr:", min(stats$anra_increase_annr)))
+print(paste("anra min increase from annr:", max(stats$anra_increase_annr)))
+
+# Calculate the refined difference
+print(paste("kore increase from annr:", sum(stats$anre_increase_annr)/nrow(stats)))
+print(paste("kore increase from kora:", sum(stats$kore_increase_kora)/nrow(stats)))
+print(paste("kore increase from kora valid:", sum(stats$kore_increase_kora_valid)/nrow(stats)))
+
+# Calculate the number of KO found per tool accross all genomes (not unique set)
+# that are validated with eggnog
+print(paste("total number of ORFs:", sum(stats$num_ORFs)))
+print(paste("total number of KO found with kofamscan:", sum(stats$kora_valid)))
+print(paste("Percent KO annotated:", sum(stats$kora)/sum(stats$num_ORFs)))
+print(paste("Percent KO validated:", sum(stats$kora_valid)/sum(stats$num_ORFs)))
+print(paste("total number of KO found with microbeannotator:", sum(stats$mara_valid)))
+print(paste("Percent KO annotated:", sum(stats$mara)/sum(stats$num_ORFs)))
+print(paste("Percent KO validated:", sum(stats$mara_valid)/sum(stats$num_ORFs)))
+print(paste("total number of KO found with anvio:", sum(stats$anra_valid)))
+print(paste("Percent KO annotated:", sum(stats$anra)/sum(stats$num_ORFs)))
+print(paste("Percent KO validated:", sum(stats$anra_valid)/sum(stats$num_ORFs)))
+
+# Calculate the percent increase or decrease between tools
+print(paste("Percent KO annotated in MicrobeAnnotator over Kofamscan:", sum((stats$mara-stats$kora)/stats$kora)/nrow(stats)))
+print(paste("Percent KO annotated in MicrobeAnnotator over anvio:", sum((stats$mara-stats$anra)/stats$anra)/nrow(stats)))
+print(paste("Percent KO annotated in microbeannotator over refined", sum((stats$mare-stats$mara)/stats$mara)/nrow(stats)))
+print(paste("Percent KO annotated in anvi'o over Kofamscan:", sum((stats$anra-stats$kora)/stats$kora)/nrow(stats)))
+print(paste("Percent KO annotated in anvi'o over microbeannotator:", sum((stats$anra-stats$mara)/stats$mara)/nrow(stats)))
+print(paste("Percent KO annotated in kofamscan over microbeannotator:", sum((stats$kora-stats$mara)/stats$mara)/nrow(stats)))
+print(paste("Percent KO annotated over kofamscan over anvi'o", sum((stats$kora-stats$anra)/stats$anra)/nrow(stats)))
+
+# Calculate the percent increase or decrease between tools
+print(paste("Percent valid KO annotated in MicrobeAnnotator over Kofamscan:", sum((stats$mara_valid-stats$kora_valid)/stats$kora_valid)/nrow(stats)))
+print(paste("Percent valid KO annotated in MicrobeAnnotator over anvio:", sum((stats$mara_valid-stats$anra_valid)/stats$anra_valid)/nrow(stats)))
+print(paste("Percent valid KO annotated in microbeannotator over refined", sum((stats$mare_valid-stats$mara_valid)/stats$mara_valid)/nrow(stats)))
+print(paste("Percent valid KO annotated in anvi'o over Kofamscan:", sum((stats$anra_valid-stats$kora_valid)/stats$kora_valid)/nrow(stats)))
+print(paste("Percent valid KO annotated in anvi'o over microbeannotator:", sum((stats$anra_valid-stats$mara_valid)/stats$mara_valid)/nrow(stats)))
+print(paste("Percent valid KO annotated in kofamscan over microbeannotator:", sum((stats$kora_valid-stats$mara_valid)/stats$mara_valid)/nrow(stats)))
+print(paste("Percent valid KO annotated over kofamscan over anvi'o", sum((stats$kora_valid-stats$anra_valid)/stats$anra_valid)/nrow(stats)))
+
+# Calculate min and max
+print(paste("Min valid KO annotated in anvi'o over microbeannotator:", min((stats$anra_valid-stats$mara_valid)/stats$mara_valid)))
+print(paste("Max valid KO annotated in anvi'o over microbeannotator:", max((stats$anra_valid-stats$mara_valid)/stats$mara_valid)))
+
+# Calculate Wilcoxon test
+wilcox.test(stats$annr, stats$anra, paired = TRUE, alternative = "two.sided")
+wilcox.test(stats$anra_valid, stats$mara_valid, paired = TRUE, alternative = "two.sided")
+wilcox.test(stats$anra, stats$anst, paired = TRUE, alternative = "two.sided")
+
+# Calculate percent increase of decrease between anvio nt-ko and default
+print(paste("Percent valid KO annotated in stray anvi'o over default:", sum((stats$anst-stats$anra)/stats$anra)/nrow(stats)))
+
+# Calculate average ORFs annotated per genome per tool
+print(paste("Average number of ORFs annotated anvio: ", sum(stats$anst_valid/nrow(stats))))
+print(paste("Average number of ORFs annotated microbeannotator: ", sum(stats$mara_valid/nrow(stats))))
+
+names(eggnog_anra)[names(eggnog_anra) == 'anra_valid'] <- "anra"
+names(eggnog_annr)[names(eggnog_annr) == 'annr_valid'] <- "annr"
+names(eggnog_anst)[names(eggnog_anst) == 'anst_valid'] <- "anst"
+names(eggnog_mare)[names(eggnog_mare) == 'mare_valid'] <- "mare"
+names(eggnog_mara)[names(eggnog_mara) == 'mara_valid'] <- "mara"
+names(eggnog_kore)[names(eggnog_kore) == 'kore_valid'] <- "kore"
+names(eggnog_kora)[names(eggnog_kora) == 'kora_valid'] <- "kora"
 
 # Plot the number of functions compared to ORFS per genome regardless of duplication
 ko_per_tool <- aggregate(kora ~ .id, data = kora_sub[c(".id", "V1", "kora")], FUN = function(x) length(x))
@@ -226,12 +305,14 @@ ko_per_tool_long <- reshape2::melt(ko_per_tool,
                                    id.vars = c("accession", "gtdb_family", "number_genes", "kofamscan_valid", "microbeannotator_valid", "anvio_valid"), 
                                    measure.vars = c("number_hits_kofamscan", "number_hits_microbeannotator", "number_hits_anvio"),
                                    variable.name = "method", value.name = "number_hits")
-# Plot F1b
+# Plot F1a
 scatter <- ggplot(ko_per_tool_long, aes(x = number_genes, y = number_hits, color = method, size = ifelse(method == "number_hits_kofamscan", kofamscan_valid, ifelse(method == "number_hits_microbeannotator", microbeannotator_valid, anvio_valid)))) +
   geom_point(alpha = 0.5) +
   scale_color_manual(values = c("#e8b437", "#3093CB", "#038575")) +
   labs(x = "Number of ORFs per Species", y = "Number of Orthologs Annotated", color = "Method", size = "Eggnog Matches") +
   ggtitle("Orthologs Found per Method for Species") +
+  theme_light() + 
+  theme(text=element_text(size=20)) +
   scale_color_manual(values = c("#e8b437", "#3093CB", "#038575"),
                      labels = c("Kofamscan", "MicrobeAnnotator", "anvi'o"))
 
@@ -274,12 +355,11 @@ all_tools <- all_tools %>%
   group_by_at(vars(".id", "V1")) %>%
   filter(check_not_ko(mara, kora)) %>%
   ungroup()
-if (nrow(all_tools) != 0) {
-  tool_comparison <- merge(tool_comparison, aggregate(mara ~ .id, data = all_tools, FUN = function(x) length(x)), by=".id")
-} else {
-  tool_comparison$mara_anra <- 0
-}
+tool_comparison <- merge(tool_comparison, aggregate(mara ~ .id, data = all_tools, FUN = function(x) length(x)), by=".id", all=TRUE)
+tool_comparison[is.na(tool_comparison)] <- 0
+
 colnames(tool_comparison) <- c(".id", "Only MicrobeAnnotator", "Only anvi'o", "MicrobeAnnotator + anvi'o")
+tool_comparison <- merge(tool_comparison, family_linker)
 
 # Add back in family
 tool_comparison <- tool_comparison %>%
@@ -288,7 +368,6 @@ tool_comparison <- tool_comparison %>%
                                        if_else(family %in% c("Rhodobacteraceae", "Microcystaceae"), "Coastal",
                                                if_else(family %in% c("Lachnospiraceae", "Enterobacteriaceae", "Bacteroidaceae"), "Gut",
                                                        if_else(family %in% c("Nanosynbacteraceae", "Streptococcaceae"), "Oral", NA_character_))))))
-tool_comparison <- merge(tool_comparison, family_linker)
 
 # Make longer pivot
 tool_comparison_long <- tool_comparison %>%
@@ -304,16 +383,18 @@ tool_comparison_long$Category <- factor(tool_comparison_long$Category,
 family_counts <- table(tool_comparison_long$family)
 tool_comparison_long$family <- factor(tool_comparison_long$family, 
                                       levels = names(sort(family_counts, decreasing = TRUE)))
+tool_comparison_long <- tool_comparison_long[tool_comparison_long$Category != "MicrobeAnnotator + anvi'o", ]
 
 # Plot the families and orthologs found for F1b.
 ortholog_cnt <- ggplot(tool_comparison_long, aes(x = family, y = Count, fill = Category)) +
   geom_boxplot(width=1) +  # Changed to geom_boxplot
   facet_wrap(~ environment, scales = "free_x", nrow = 1, strip.position = "top", switch = "x") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(x = "Family", y = "Number of Orthologs Predicted log10(y+1)", fill = "Method Set") +
+  labs(x = "Family", y = "Number of Orthologs Annotated", fill = "Method Set") +
   ggtitle("Orthologs Found for Family per Environment") +
+  theme_light() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), text=element_text(size=20)) +
   scale_fill_manual(values = c("#3093CB", "#038575", "#05d0b7", "#e8b437"),
-                    labels = c("MicrobeAnnotator (No anvi'o)", "anvi'o (no MicrobeAnnotator)", "anvi'o (no Kofamscan)", "Kofamscan (no anvi'o)"))
+                    labels = c("MicrobeAnnotator (No anvi'o)", "anvi'o (no Kofamscan)", "anvi'o (no Kofamscan)", "Kofamscan (no anvi'o)"))
 
 # Plot F1c
 strays_anst <- merge(anst, stray_kofam_hmm, by = "V3")
@@ -326,10 +407,10 @@ anst_unq <- anst %>% distinct(V5, .keep_all = TRUE)
 anra_unq <- anra %>% distinct(V5, .keep_all = TRUE)
 mare_unq <- mare %>% distinct(V6, .keep_all = TRUE)
 # Generate evals dataframes to compare strays
-colnames(anst_unq)[colnames(anst_unq) == "V5"] <- "anvi'o (Hueristic + nt-KO)"
-colnames(anra_unq)[colnames(anra_unq) == "V5"] <- "anvi'o (Hueristic)"
+colnames(anst_unq)[colnames(anst_unq) == "V5"] <- "anvi'o (Heuristic + nt-KO)"
+colnames(anra_unq)[colnames(anra_unq) == "V5"] <- "anvi'o (Heuristic)"
 colnames(mare_unq)[colnames(mare_unq) == "V6"] <- "MicrobeAnnotator"
-colnames(strays_anst_unq)[colnames(strays_anst_unq) == "V5"] <- "anvi'o (Hueristic + nt-KO)"
+colnames(strays_anst_unq)[colnames(strays_anst_unq) == "V5"] <- "anvi'o (Heuristic + nt-KO)"
 colnames(strays_mare_unq)[colnames(strays_mare_unq) == "V6"] <- "MicrobeAnnotator"
 colnames(not_standard_mare_unq)[colnames(not_standard_mare_unq) == "V6"] <- "MicrobeAnnotator"
 
@@ -337,23 +418,23 @@ mare_unq$MicrobeAnnotator <- as.numeric(mare_unq$MicrobeAnnotator)
 strays_mare_unq$MicrobeAnnotator <- as.numeric(strays_mare_unq$MicrobeAnnotator)
 not_standard_mare_unq$MicrobeAnnotator <- as.numeric(not_standard_mare_unq$MicrobeAnnotator)
 
-evals <- bind_rows(dplyr::select(anst_unq, `anvi'o (Hueristic + nt-KO)`, `anvi'o (Hueristic + nt-KO)`),
-                   dplyr::select(anra_unq, `anvi'o (Hueristic)`, `anvi'o (Hueristic)`),
+evals <- bind_rows(dplyr::select(anst_unq, `anvi'o (Heuristic + nt-KO)`, `anvi'o (Heuristic + nt-KO)`),
+                   dplyr::select(anra_unq, `anvi'o (Heuristic)`, `anvi'o (Heuristic)`),
                    dplyr::select(mare_unq, MicrobeAnnotator, MicrobeAnnotator),
                    .id = "Source") %>% 
-  pivot_longer(cols = c(`anvi'o (Hueristic + nt-KO)`, `anvi'o (Hueristic)`, MicrobeAnnotator)) %>%
+  pivot_longer(cols = c(`anvi'o (Heuristic + nt-KO)`, `anvi'o (Heuristic)`, MicrobeAnnotator)) %>%
   drop_na()
 
-evals_stray <- bind_rows(dplyr::select(strays_anst_unq, `anvi'o (Hueristic + nt-KO)`, `anvi'o (Hueristic + nt-KO)`),
+evals_stray <- bind_rows(dplyr::select(strays_anst_unq, `anvi'o (Heuristic + nt-KO)`, `anvi'o (Heuristic + nt-KO)`),
                          dplyr::select(not_standard_mare_unq, MicrobeAnnotator, MicrobeAnnotator), 
                          .id = "Source") %>% 
-  pivot_longer(cols = c(`anvi'o (Hueristic + nt-KO)`, MicrobeAnnotator)) %>%
+  pivot_longer(cols = c(`anvi'o (Heuristic + nt-KO)`, MicrobeAnnotator)) %>%
   drop_na()
 
 evals_subset <- evals %>% 
-  filter(name %in% c("anvi'o (Hueristic + nt-KO)", "anvi'o (Hueristic)"))
+  filter(name %in% c("anvi'o (Heuristic + nt-KO)", "anvi'o (Heuristic)"))
 evals_stray_subset <- evals_stray %>% 
-  filter(name %in% c("anvi'o (Hueristic + nt-KO)", "anvi'o (Hueristic)"))
+  filter(name %in% c("anvi'o (Heuristic + nt-KO)", "anvi'o (Heuristic)"))
 
 # Combine the datasets and add a column to distinguish between them
 evals_combined <- rbind(
@@ -375,13 +456,14 @@ p1 <- ggplot() +
   labs(title = "nt-KO Recovery Methods E-Values",
        x = "Category",
        y = "E-Value",
-       color = "Method")
+       color = "Method") + 
+  theme_light() +
+  theme(text=element_text(size=20))
 
 # Create the plot
 p2 <- ggplot(data = evals_combined, aes(x = name, y = value, color = set)) +
   geom_jitter(position = position_jitter(width = 0.2), alpha = 0.6) +
   scale_color_manual(values = c("Subset" = custom_colors[1], "nt-KO" = "black")) +
-  theme_minimal() +
   theme(
     panel.border = element_rect(color = "black", fill = NA, size = 1),
     plot.background = element_rect(color = "black", fill = NA, size = 1, linetype = "dotted"), # Dotted border around entire plot
@@ -390,10 +472,12 @@ p2 <- ggplot(data = evals_combined, aes(x = name, y = value, color = set)) +
     axis.text = element_text(size = 10),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
-    legend.position = "none"
+    legend.position = "none",
+    text=element_text(size=20)
   ) +
   labs(x = "Category",
-       y = "E-Value") 
+       y = "E-Value") +
+  theme_light()
 
 bitscores <- p1 + 
   annotation_custom(ggplotGrob(p2), xmin = .5, xmax = 2.5, 
@@ -408,6 +492,6 @@ bitscores <- p1 +
 # plot in patchwork 
 (scatter / bitscores / ortholog_cnt) + plot_layout(height = c(4, 4, 4)) + plot_annotation(tag_levels = 'A')
 
-pdf(file="f1abc.pdf", width=15, height=20)
+pdf("f1abc.png", width=50, height=50)
 (scatter / bitscores / ortholog_cnt) + plot_layout(height = c(4, 4, 4)) + plot_annotation(tag_levels = 'A')
 dev.off()
