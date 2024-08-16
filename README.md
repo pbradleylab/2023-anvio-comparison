@@ -3,6 +3,6 @@ Tools used for this comparison are microbeannotator, kofamscan, and Anvi'o. Inst
 
 The snakemake workflow is used to run the main analysis and generation of the files.
 
-All scripts used for figure and in the workflow are found in the `workflow/scripts/` folder
-The individual Rscripts are used to generate the figures.
-The python scripts are used to generate figures.
+All scripts used for figure and in the workflow are found in the `workflow/scripts/` folder.
+- The individual Rscripts are used to generate the figures.
+- The python scripts are used to generate figures.
