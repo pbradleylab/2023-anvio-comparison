@@ -18,6 +18,8 @@ TOOL_DIR_1="anvio"
 TOOL_DIR_2="kofamscan"
 OUTPUT_TABLE="${FUNCTIONS_OUTPUT_DIR}/${TOOL_DIR_1}-vs-${TOOL_DIR_2}-operon-examples.txt"
 
+rm -f $OUTPUT_TABLE
+
 for dir in ${FUNCTIONS_OUTPUT_DIR}/${TOOL_DIR_1}/metabolism/default/*/; do \
     dir=${dir%*/}      # remove the trailing "/"
     genome="${dir##*/}"
