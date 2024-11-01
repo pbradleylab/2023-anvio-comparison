@@ -61,7 +61,7 @@ rule generate_f1_table:
         genes_mara="results/annotation/microbeAnnotator/functions/default/",
         genes_mare="results/annotation/microbeAnnotator/functions/refined/",
         genes_anra="results/annotation/anvio/functions/default/",
-        genes_annr="results/annotation/anvio/functions/no_hueristic/",
+        genes_annr="results/annotation/anvio/functions/no_heuristic/",
         genes_anst="results/annotation/anvio/functions/stray/",
         met_kora="results/annotation/kofamscan/metabolism/default/",
         met_mara="results/annotation/microbeAnnotator/metabolism/default/",

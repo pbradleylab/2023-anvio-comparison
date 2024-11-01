@@ -30,7 +30,7 @@ mod_db_path = sys.argv[3]
 
 # CONSTANTS
 TOOL_LIST = ['anvio', 'kofamscan', 'microbeannotator', 'eggnog']
-PARAM_LIST = ['default', 'no_hueristic', 'stray', 'refined']
+PARAM_LIST = ['default', 'no_heuristic', 'stray', 'refined']
 
 # METHODS to parse functions output from each tool
 def parse_anvio_functions(file_path, keep_best_hit_per_gene=True):

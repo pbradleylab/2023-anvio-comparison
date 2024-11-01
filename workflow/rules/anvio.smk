@@ -44,7 +44,7 @@ rule anvio_make_gff:
 rule anvio_gen_contigs_no_heuristic_db:
     input:rules.anvio_script_reformat.output
     output:
-        db="results/annotation/anvio/contigs_db/anvio/no_hueristic/{genome}/output.db",
+        db="results/annotation/anvio/contigs_db/anvio/no_heuristic/{genome}/output.db",
         done="results/temporary/anvio/{genome}.anvio_gen_contigs_no_heuristic_db"
     conda:"../envs/anvio.yml"
     log: "logs/annotation/contigs_db/anvio/default/{genome}.log"
@@ -106,11 +106,11 @@ rule anvio_export_functions_no_huerestic:
      input:
         done=rules.anvio_gen_contigs_no_heuristic_db.output.done,
         kegg=rules.anvio_run_kegg_kofams_no_heuristic.output
-     output:"results/annotation/anvio/functions/no_hueristic/{genome}.tsv"
+     output:"results/annotation/anvio/functions/no_heuristic/{genome}.tsv"
      params:
         db=rules.anvio_gen_contigs_no_heuristic_db.output.db
      conda:"../envs/anvio.yml"
-     log: "logs/annotation/anvio/functions/no_hueristic/{genome}.log"
+     log: "logs/annotation/anvio/functions/no_heuristic/{genome}.log"
      shell:
         """
         anvi-export-functions -c {params.db} -o {output} 2> {log}
