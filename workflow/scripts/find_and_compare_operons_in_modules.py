@@ -11,10 +11,10 @@ import pandas as pd
 
 # COMMAND LINE PARAMETERS
 if len(sys.argv) > 2:
-    anvio_input = sys.argv[1]
-    ks_input = sys.argv[2]
+    input_1 = sys.argv[1]
+    input_2 = sys.argv[2]
 else:
-    print("Not enough input files. Please provide modules mode files from (1) anvi'o and (2) kofamscan.")
+    print("Not enough input files. Please provide modules mode files from, i.e. (1) anvi'o and (2) kofamscan.")
 if len(sys.argv) > 3:
     output_file = sys.argv[3]
 else:
@@ -23,6 +23,12 @@ else:
 ## INTERNAL PARAMETERS
 MAX_GENE_ID_DIFFERENCE_FOR_OPERON = 5   # how distant are subsequent gene calls allowed to be to consider them in an 'operon'?
 FRACTION_SMALL_DIFFERENCES_FOR_OPERON = 0.5  # required proportion of gene calls that are close enough to each other to predict an 'operon'
+
+## GUESS THE TOOL NAMES FROM THE INPUT PATHS (for operons in genomes table output)
+split_input_path_1 = input_1.split('/')
+TOOL_1 = split_input_path_1[split_input_path_1.index('metabolism') - 1]
+split_input_path_2 = input_2.split('/')
+TOOL_2 = split_input_path_2[split_input_path_2.index('metabolism') - 1]
 
 ## FUNCTIONS
 def is_operon(gene_call_list):
@@ -48,8 +54,8 @@ def is_operon(gene_call_list):
         return False
 
 
-a_df = pd.read_csv(anvio_input, sep="\t", index_col=0)
-k_df = pd.read_csv(ks_input, sep="\t", index_col=0)
+a_df = pd.read_csv(input_1, sep="\t", index_col=0)
+k_df = pd.read_csv(input_2, sep="\t", index_col=0)
 
 ## identify modules that are more complete with anvi'o annotations than with kofamscan's
 mods_in_anvio = set(a_df[a_df.pathwise_module_completeness > 0].index.tolist())
