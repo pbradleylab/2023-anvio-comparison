@@ -3,7 +3,7 @@
 #  pathways encoded in operons that are more complete when using anvi'o annotations than when using kofamscan annotations
 # input: two modules mode output files for one genome, one from anvi'o and one from kofamscan
 # output: a table of pathways in operons that are more complete using anvi'o
-# usage: python find_and_compare_operons_in_modules.py ANVIO_MODULES_FILE KOFAMSCAN_MODULES_FiLE [OUTPUT_FILE]
+# usage: python find_and_compare_operons_in_modules.py ANVIO_MODULES_FILE KOFAMSCAN_MODULES_FiLE [OUTPUT_FILE] [GENOME_NAME] [GENOME_OPERON_TABLE]
 
 import os
 import sys
@@ -18,7 +18,17 @@ else:
 if len(sys.argv) > 3:
     output_file = sys.argv[3]
 else:
-    output_file = os.path.dirname(anvio_input) + "anvio_vs_kofamscan_operons.txt"
+    output_file = os.path.dirname(input_1) + "anvio_vs_kofamscan_operons.txt"
+if len(sys.argv) > 4:
+    genome_name = sys.argv[4]
+else:
+    split_input_path = input_1.split('/')
+    genome_name = split_input_path[split_input_path.index('default') + 1]
+if len(sys.argv) > 5:
+    OPERONS_IN_GENOME_TABLE = sys.argv[5]
+else:
+    OPERONS_IN_GENOME_TABLE = "operons_in_genomes.txt"
+
 
 ## INTERNAL PARAMETERS
 MAX_GENE_ID_DIFFERENCE_FOR_OPERON = 5   # how distant are subsequent gene calls allowed to be to consider them in an 'operon'?
@@ -60,6 +70,12 @@ k_df = pd.read_csv(input_2, sep="\t", index_col=0)
 ## identify modules that are more complete with anvi'o annotations than with kofamscan's
 mods_in_anvio = set(a_df[a_df.pathwise_module_completeness > 0].index.tolist())
 mods_in_ks = set(k_df[k_df.pathwise_module_completeness > 0].index.tolist())
+
+mods_in_operon_anvio = set([m for m in mods_in_anvio if is_operon(a_df.loc[m, "gene_caller_ids_in_module"])])
+mods_in_operon_ks = set([m for m in mods_in_ks if is_operon(k_df.loc[m, "gene_caller_ids_in_module"])])
+with open(OPERONS_IN_GENOME_TABLE, "a") as f:
+    f.write(f"{genome_name}\t{TOOL_1}\t{','.join(mods_in_operon_anvio)}\n")
+    f.write(f"{genome_name}\t{TOOL_2}\t{','.join(mods_in_operon_anvio)}\n")
 
 mods_to_consider = set([])
 for mod in mods_in_anvio:
