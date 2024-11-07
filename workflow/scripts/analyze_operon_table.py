@@ -1,3 +1,4 @@
+#!/usr/bin/python
 ## script for analyzing the operon table
 ## filters the operon example table to get some good examples for the supplementary figure, and computes some numbers about them
 
