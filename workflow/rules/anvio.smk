@@ -68,7 +68,7 @@ rule anvio_run_kegg_kofams:
     threads: 40
     shell:
         """
-        anvi-run-kegg-kofams -c {params.db} --kegg-data-dir {input.kofam} -T {threads} --just-do-it 2> {log}
+        anvi-run-kegg-kofams -c {params.db} --log-bitscores --kegg-data-dir {input.kofam} -T {threads} --just-do-it 2> {log}
         touch {output}
         """
 
@@ -84,7 +84,7 @@ rule anvio_run_kegg_kofams_no_heuristic:
     threads: 40
     shell:
         """
-        anvi-run-kegg-kofams --skip-bitscore-heuristic -c {params.db} --kegg-data-dir {input.kofam} -T {threads} --just-do-it 2> {log}
+        anvi-run-kegg-kofams --skip-bitscore-heuristic --log-bitscores -c {params.db} --kegg-data-dir {input.kofam} -T {threads} --just-do-it 2> {log}
         touch {output}
         """
 
@@ -143,7 +143,7 @@ rule anvio_run_kegg_kofams_stray:
     threads: 40
     shell:
         """
-        anvi-run-kegg-kofams --include-stray-KOs -c {params.db} --kegg-data-dir {input.kofam} -T {threads} --just-do-it 2> {log}
+        anvi-run-kegg-kofams --log-bitscores --include-stray-KOs -c {params.db} --kegg-data-dir {input.kofam} -T {threads} --just-do-it 2> {log}
         touch {output}
         """
 
