@@ -120,26 +120,26 @@ family <- c("Bacteroidaceae","Nanosynbacteraceae", "Streptococcaceae",
             "Streptomycetaceae", "Rhizobiaceae")
 
 # Read in metadata files needed to generate graphs
-family_linker <- make_linker("/Users/kananen/Desktop/ImHere/bac120_metadata_r214.tsv")
-stray_kofam_hmm <- make_stray_kofam("/Users/kananen/Desktop/ImHere/hmm_profiles_with_kofams_with_no_threshold.hmm")
+family_linker <- make_linker("/Users/user/folder/bac120_metadata_r214.tsv")
+stray_kofam_hmm <- make_stray_kofam("/Users/user/folder/hmm_profiles_with_kofams_with_no_threshold.hmm")
 
 # Pause here to see who has e-values above 0.01 and run them in eggnog mapper
 # if they do. Read in all the files in a given directory
-eggnog <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/eggnog/", "eggnog")
+eggnog <- read_in_files("/Users/user/folder/unfiltered/eggnog/", "eggnog")
 # Calculated ORFS from worflow in table 1 based off of the number
 orfs <- read.csv("/Users/kananen/Documents/Upset/upset_R/f1_table.tsv", sep='\t')
 orfs$accession <- sub("..$", "", orfs$accession)
 
 # Read in Kofamscan raw and refined files
-kora <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/kofamscan/functions/default/", "kofamscan")
-kore <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/kofamscan/functions/refined/", "kofamscan")
+kora <- read_in_files("/Users/user/folder/unfiltered/kofamscan/functions/default/", "kofamscan")
+kore <- read_in_files("/Users/user/folder/unfiltered/kofamscan/functions/refined/", "kofamscan")
 # Read in MicrobeAnnotator raw and refined files
-mara <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/microbeAnnotator/functions/default/", "microbeannotator")
-mare <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/microbeAnnotator/functions/refined/", "microbeannotator")
+mara <- read_in_files("/Users/user/folder/unfiltered/microbeAnnotator/functions/default/", "microbeannotator")
+mare <- read_in_files("/Users/user/folder/unfiltered/microbeAnnotator/functions/refined/", "microbeannotator")
 # Read in Anvio raw, stray, and no recovery files
-anra <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/anvio/functions/default/", "anvio")
-anst <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/anvio/functions/stray/", "anvio")
-annr <- read_in_files("/Users/kananen/Desktop/ImHere/unfiltered/anvio/functions/no_heuristic/", "anvio")
+anra <- read_in_files("/Users/user/folder/unfiltered/anvio/functions/default/", "anvio")
+anst <- read_in_files("/Users/user/folder/unfiltered/anvio/functions/stray/", "anvio")
+annr <- read_in_files("/Users/user/folder/unfiltered/anvio/functions/no_heuristic/", "anvio")
 
 # Clean up anvi'o and kofamscan output
 # Here we need to make three versions of kofam in the cleaning process for later comparisons
@@ -448,11 +448,11 @@ custom_colors <- c("#2a9d8f", "#2a9d8f", "#6DB9E4", "black")
 # Plotting  
 p1 <- ggplot() +
   geom_jitter(data = evals, aes(x = name, y = value, color = name),
-              position = position_jitter(width = 0.2), alpha = 1) +
-  geom_jitter(data = evals_stray, aes(x = name, y = value, color = "nt-KO"),
-              position = position_jitter(width = 0.2), alpha = 1) +
+              position = position_jitter(width = 0.2), alpha = 1, size = 3) +
+  geom_point(data = evals_stray, aes(x = name, y = value, color = "nt-KO"),
+             size = 3, shape = 15, position = position_jitter(width = 0.2), alpha = 1) +
   scale_color_manual(values = custom_colors, 
-                     labels = c("Anvio", "Anvio", "MicrobeAnnotator", "nt-KO")) + 
+                     labels = c("anvi'o", "anvi'o", "MicrobeAnnotator", "nt-KO")) + 
   labs(title = "nt-KO Recovery Methods E-Values",
        x = "Category",
        y = "E-Value",
@@ -461,23 +461,24 @@ p1 <- ggplot() +
   theme(text=element_text(size=20))
 
 # Create the plot
-p2 <- ggplot(data = evals_combined, aes(x = name, y = value, color = set)) +
-  geom_jitter(position = position_jitter(width = 0.2), alpha = 0.6) +
+p2 <- ggplot(data = evals_combined, aes(x = name, y = value, color = set, shape = set)) +
+  geom_jitter(position = position_jitter(width = 0.2), size = 3, alpha = 1) +
   scale_color_manual(values = c("Subset" = custom_colors[1], "nt-KO" = "black")) +
+  scale_shape_manual(values = c("Subset" = 16, "nt-KO" = 15)) + # 17 = triangle, 15 = square
+  theme_light() +
   theme(
     panel.border = element_rect(color = "black", fill = NA, size = 1),
     plot.background = element_rect(color = "black", fill = NA, size = 1, linetype = "dotted"), # Dotted border around entire plot
-    plot.title = element_text(hjust = 0.5, size = 14),
-    axis.title = element_text(size = 12),
-    axis.text = element_text(size = 10),
+    plot.title = element_text(hjust = 0.5, size = 18),
+    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 16),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     legend.position = "none",
-    text=element_text(size=20)
+    text = element_text(size = 18)
   ) +
-  labs(x = "Category",
-       y = "E-Value") +
-  theme_light()
+  labs(x = "Category", y = "E-Value")
+
 
 bitscores <- p1 + 
   annotation_custom(ggplotGrob(p2), xmin = .5, xmax = 2.5, 
@@ -492,6 +493,6 @@ bitscores <- p1 +
 # plot in patchwork 
 (scatter / bitscores / ortholog_cnt) + plot_layout(height = c(4, 4, 4)) + plot_annotation(tag_levels = 'A')
 
-pdf("f1abc.png", width=50, height=50)
+pdf("f1abc.pdf", width=20, height=20)
 (scatter / bitscores / ortholog_cnt) + plot_layout(height = c(4, 4, 4)) + plot_annotation(tag_levels = 'A')
 dev.off()
