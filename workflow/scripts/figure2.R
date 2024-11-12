@@ -120,7 +120,7 @@ get_aggregation <- function(colname1, colname2, df1, df2, name, output){
 
 
 # Read in data -----------------------------------------------------------------
-family_linker <- read_family("/Users/user/folder/ImHere/bac120_metadata_r214.tsv")
+family_linker <- read_family("/Users/kananen/Desktop/ImHere/bac120_metadata_r214.tsv")
 anvio <- format_df(list.files(list.files("/Users/user/folder/unfiltered/anvio/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
 microbeannotator <- format_df(list.files(list.files("/Users/user/folder/unfiltered/microbeAnnotator/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
 kofamscan <- format_df(list.files(list.files("/Users/user/folder/unfiltered/kofamscan/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
