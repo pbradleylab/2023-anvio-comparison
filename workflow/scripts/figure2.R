@@ -23,7 +23,7 @@ format_df <- function(filenames, family_linker){
   names(filenames) <- paste(gsub('.txt','', basename(dirname(filenames))))
   df <- ldply(filenames, read.csv, header=TRUE, sep='\t') 
   df <- merge(df, family_linker, by = ".id")
-  df <- df[c(".id","module", "family", "module_subcategory", "pathwise_module_completeness")]
+  df <- df[c(".id","module", "family", "module_subcategory", "pathwise_module_completeness","gene_caller_ids_in_module")]
   return(df)
 }
 
@@ -118,11 +118,40 @@ get_aggregation <- function(colname1, colname2, df1, df2, name, output){
   return(output)
 }
 
+get_only_multi_genes <- function(df){
+  df$gene_count <- sapply(df$gene_caller_ids_in_module, function(x) {
+    gene_list <- strsplit(x, ",")[[1]]
+    return(length(gene_list))
+  })
+  df <- subset(df, df$gene_count > 1)
+  return(df[c(".id","module", "family", "module_subcategory", "pathwise_module_completeness")])
+}
+
+combine_data <- function(anvio, microbeannotator, kofamscan) {
+  # Make a combined dataframe for all of the modules for ease of use
+  all_modules <- merge(anvio, microbeannotator, all=TRUE, by=c(".id","module","family", "module_subcategory"))
+  names(all_modules) <- c(".id","module","family", "module_subcategory", "an_pwc", "ma_pwc")
+  all_modules <- merge(all_modules, kofamscan, all=TRUE, by=c(".id","module","family", "module_subcategory"))
+  names(all_modules) <- c(".id","module","family", "module_subcategory", "an_pwc", "ma_pwc", "ko_pwc")
+  # Set missing to be 0% complete
+  all_modules[is.na(all_modules)] <- 0.0
+  return(all_modules)
+}
+
+get_median <-function(df) {
+  median_cmp_per_family <- df %>% 
+    group_by(family, module) %>% 
+    dplyr::summarize(anvio = median(an_pwc), ma = median(ma_pwc), kofamscan = median(ko_pwc))
+  median_cmp_per_family_long <- median_cmp_per_family %>%
+    pivot_longer(cols=c(anvio, ma), names_to="cmp_method", values_to="cmp_completeness") %>%
+    dplyr::rename(kfs_completeness = kofamscan)
+  return(median_cmp_per_family_long)
+}
 
 # Read in data -----------------------------------------------------------------
-family_linker <- read_family("/Users/kananen/Desktop/ImHere/bac120_metadata_r214.tsv")
+family_linker <- read_family("/Users/user/folder/bac120_metadata_r214.tsv")
 anvio <- format_df(list.files(list.files("/Users/user/folder/unfiltered/anvio/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
-microbeannotator <- format_df(list.files(list.files("/Users/user/folder/unfiltered/microbeAnnotator/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
+microbeannotator <- format_df(list.files(list.files("/User/suser/folder/unfiltered/microbeAnnotator/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
 kofamscan <- format_df(list.files(list.files("/Users/user/folder/unfiltered/kofamscan/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
 
 # Take a completeness above .80% for comparisons of more complete pathways
@@ -131,33 +160,148 @@ microbeannotator_80 <- subset(microbeannotator, pathwise_module_completeness >= 
 kofamscan_80 <- subset(kofamscan, pathwise_module_completeness >= .80)
 
 # Make a combined dataframe for all of the modules for ease of use
-all_modules <- merge(anvio, microbeannotator, all=TRUE, by=c(".id","module","family", "module_subcategory"))
-names(all_modules) <- c(".id","module","family", "module_subcategory", "an_pwc", "ma_pwc")
-all_modules <- merge(all_modules, kofamscan, all=TRUE, by=c(".id","module","family", "module_subcategory"))
-names(all_modules) <- c(".id","module","family", "module_subcategory", "an_pwc", "ma_pwc", "ko_pwc")
-# Set missing to be 0% complete
-all_modules[is.na(all_modules)] <- 0.0
+all_modules <- combine_data(anvio_80[c(".id","module", "family", 
+                                       "module_subcategory", "pathwise_module_completeness")], 
+                            microbeannotator_80[c(".id","module", "family", 
+                                                  "module_subcategory", "pathwise_module_completeness")], 
+                            kofamscan_80[c(".id","module", "family", 
+                                           "module_subcategory", "pathwise_module_completeness")])
+# Make a combined dataframe for all of the modules for ease of use
+all_modules_multi <- combine_data(get_only_multi_genes(anvio_80), 
+                                  get_only_multi_genes(microbeannotator_80), 
+                                  get_only_multi_genes(kofamscan_80))
 
+# ----------------
+all_modules_diff <- all_modules %>%
+  filter(an_pwc != ma_pwc | an_pwc != ko_pwc | ma_pwc != ko_pwc)
+all_modules_diff_multi <- all_modules_multi %>%
+  filter(an_pwc != ma_pwc | an_pwc != ko_pwc | ma_pwc != ko_pwc)
+
+
+# Convert to long format for plotting
+all_modules_diff_long <- all_modules_diff %>%
+  pivot_longer(cols = c(an_pwc, ma_pwc, ko_pwc), names_to = "type", values_to = "pwc_value")
+all_modules_diff_long <- all_modules_diff_long %>%
+  mutate(module_per_gene = paste(.id, module, sep = "_"))
+all_modules_diff_long_multi <- all_modules_diff_multi %>%
+  pivot_longer(cols = c(an_pwc, ma_pwc, ko_pwc), names_to = "type", values_to = "pwc_value")
+all_modules_diff_long_multi <- all_modules_diff_long_multi %>%
+  mutate(module_per_gene = paste(.id, module, sep = "_"))
+
+
+# Plot the path-wise completeness per family for all the genomes+modules.
+plots <- list()  
+for(fam in unique(all_modules_diff_long$family)){
+  p <- ggplot(all_modules_diff_long %>% filter(family == fam), 
+              aes(x = reorder(module_per_gene, -pwc_value), y = pwc_value, fill = type)) + 
+    geom_col(position = "dodge", width = 1) +
+    facet_grid(type ~ family, 
+               labeller = labeller(type = c("ko_pwc" = "Kofamscan", 
+                                            "ma_pwc" = "MicrobeAnnotator", 
+                                            "an_pwc" = "Anvio"))) +  # Rename facet labels
+    labs(x = "Individual Kegg Module per Genome", y = "Pathwise-Completeness Score", 
+         title = NULL) + 
+    scale_fill_manual(values = c("ko_pwc" = "#e8b437", "ma_pwc" = "#3093CB", "an_pwc" = "#038575"),
+                      labels = c("ko_pwc" = "Kofamscan", "ma_pwc" = "MicrobeAnnotator", "an_pwc" = "anvi'o")) + 
+    theme_minimal() + 
+    theme(
+      legend.position = "none",
+      legend.title = element_blank(),
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      panel.spacing.y = unit(.1, "line"),
+      panel.spacing.x = unit(.5, "line")
+    )
+  plots[[fam]] <- p
+}
+combined_plot <- wrap_plots(plots, ncol = 4, nrow = 3) + 
+  plot_annotation(
+    title = "Pathwise-Completeness for All Modules Across Genomes",
+    theme = theme(plot.title = element_text(hjust = 0.5))  # Center the title
+  )
+
+pdf(file="Sf5.pdf", width=15, height=20)
+combined_plot
+dev.off()
+ggsave("Sf5.png", combined_plot, width = 15, height = 8, dpi = 300)  # Adjust width, height, and dpi as needed
+
+
+plots <- list()  
+for(fam in unique(all_modules_diff_long_multi$family)){
+  p <- ggplot(all_modules_diff_long_multi %>% filter(family == fam), 
+              aes(x = reorder(module_per_gene, -pwc_value), y = pwc_value, fill = type)) + 
+    geom_col(position = "dodge", width = 1) +
+    facet_grid(type ~ family, 
+               labeller = labeller(type = c("ko_pwc" = "Kofamscan", 
+                                            "ma_pwc" = "MicrobeAnnotator", 
+                                            "an_pwc" = "Anvio"))) +  # Rename facet labels
+    labs(x = "Individual Kegg Module per Genome", y = "Pathwise-Completeness Score", 
+         title = NULL) + 
+    scale_fill_manual(values = c("ko_pwc" = "#e8b437", "ma_pwc" = "#3093CB", "an_pwc" = "#038575"),
+                      labels = c("ko_pwc" = "Kofamscan", "ma_pwc" = "MicrobeAnnotator", "an_pwc" = "anvi'o")) + 
+    theme_minimal() + 
+    theme(
+      legend.position = "none",
+      legend.title = element_blank(),
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      panel.spacing.y = unit(.1, "line"),
+      panel.spacing.x = unit(.5, "line")
+    )
+  plots[[fam]] <- p
+}
+combined_plot <- wrap_plots(plots, ncol = 4, nrow = 3) + 
+  plot_annotation(
+    title = "Pathwise-Completeness for All Modules Across Genomes",
+    theme = theme(plot.title = element_text(hjust = 0.5))  # Center the title
+  )
+
+pdf(file="Sf6.pdf", width=15, height=20)
+combined_plot
+dev.off()
+ggsave("Sf6.png", combined_plot, width = 15, height = 8, dpi = 300)  # Adjust width, height, and dpi as needed
+
+# -----------------
+
+
+
+
+
+
+# Write out to an intermediate file
 write_tsv(all_modules, file = "all_completeness_all_tools.csv")
-
 # Generate Supplamental Figure 1
-completeness <- read_tsv("all_completeness_all_tools.csv")
-median_cmp_per_family <- completeness %>% 
-  group_by(family, module) %>% 
-  dplyr::summarize(anvio = median(an_pwc), ma = median(ma_pwc), kofamscan = median(ko_pwc))
-median_cmp_per_family_long <- median_cmp_per_family %>%
-  pivot_longer(cols=c(anvio, ma), names_to="cmp_method", values_to="cmp_completeness") %>%
-  dplyr::rename(kfs_completeness = kofamscan)
-sf1 <- median_cmp_per_family_long %>%
-  ggplot(aes(x=kfs_completeness, y=cmp_completeness, color=cmp_method, label=module)) + 
-  geom_point(alpha=0.8) + 
-  geom_abline(slope=1,intercept=0,lty=2,col="#AAAAAA") + facet_wrap(~ family) + 
-  theme_minimal() + scale_color_manual(values=c(anvio="#2A9D8F", ma="#6DB9E4"), 
-                                       labels = c("ma" = "MicrobeAnnotator", "anvio" = "anvi'o")) +
-  labs(title = "Module Completeness of Methods over Kofamscan by Family", 
-       x = "Pathwise-Completeness (other Kofamscan)", 
-       y = "Pathwise-Completeness (other method)",
+
+# Generate median cmp for all modules above 80% and also all those above 80% AND with more 
+# than 1 gene in the module.
+median_cmp_per_family_long <- get_median(all_modules)
+median_cmp_per_family_long_multi <- get_median(all_modules_multi)
+
+diff_df <- anti_join(median_cmp_per_family_long, median_cmp_per_family_long_multi)
+median_cmp <- anti_join(median_cmp_per_family_long, diff_df)
+median_cmp <- median_cmp %>%
+  mutate(count_label = ifelse(module %in% diff_df$module, "count > 1", "all"))
+
+sf1 <- median_cmp %>% 
+  ggplot(aes(x = kfs_completeness, y = cmp_completeness, color = cmp_method, shape = count_label)) +  # Default circles for "all"
+  geom_point(data = diff_df, aes(x = kfs_completeness, y = cmp_completeness, color = cmp_method, shape = "count > 1"), 
+             size = 3, alpha = 0.8) +  # Triangles for "count > 1"
+  geom_abline(slope = 1, intercept = 0, lty = 2, col = "#AAAAAA") +
+  geom_point(alpha = 0.8, size = 2) + 
+  facet_wrap(~ family) + 
+  theme_minimal() + 
+  scale_color_manual(values = c(anvio = "#2A9D8F", ma = "#6DB9E4"), 
+                     labels = c("ma" = "MicrobeAnnotator", "anvio" = "anvi'o")) + 
+  scale_shape_manual(values = c("all" = 16, "count > 1" = 15), 
+                     name = "Genes in Module", 
+                     labels = c("all" = "Multiple Genes", "count > 1" = "Single Gene")) +  # Manual shape legend
+  labs(title = "Module Completeness by Family", 
+       x = "Module Completeness (other Kofamscan)", 
+       y = "Module Completeness (other method)", 
        color = "Method")
+
+
+
 
 # Calculate difference in modules found for anvio vs kofamscan and anvio vs
 # microbeannotator. NOTE: This is NOT the percent increase. For this we can just
