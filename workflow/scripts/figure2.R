@@ -208,9 +208,9 @@ plot_module_hist <- function(df, df2) {
 
 # Read in data -----------------------------------------------------------------
 family_linker <- read_family("/Users/kananen/Desktop/Keep_until_anvio_published/bac120_metadata_r214.tsv")
-anvio <- format_df(list.files(list.files("/Users/kananen/Desktop/Keep_until_anvio_published/unfiltered/anvio/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
-microbeannotator <- format_df(list.files(list.files("/Users/kananen/Desktop/Keep_until_anvio_published/unfiltered/microbeAnnotator/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
-kofamscan <- format_df(list.files(list.files("/Users/kananen/Desktop/Keep_until_anvio_published/unfiltered/kofamscan/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
+anvio <- format_df(list.files(list.files("/Users/user/folder/unfiltered/anvio/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
+microbeannotator <- format_df(list.files(list.files("/Users/user/folder/unfiltered/microbeAnnotator/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
+kofamscan <- format_df(list.files(list.files("/Users/user/folder/unfiltered/kofamscan/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
 
 # Take a completeness above .80% for comparisons of more complete pathways
 anvio_80 <- subset(anvio, pathwise_module_completeness >= .80)
