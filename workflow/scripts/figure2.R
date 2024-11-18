@@ -23,7 +23,7 @@ format_df <- function(filenames, family_linker){
   names(filenames) <- paste(gsub('.txt','', basename(dirname(filenames))))
   df <- ldply(filenames, read.csv, header=TRUE, sep='\t') 
   df <- merge(df, family_linker, by = ".id")
-  df <- df[c(".id","module", "family", "module_subcategory", "pathwise_module_completeness","gene_caller_ids_in_module")]
+  df <- df[c(".id","module", "family", "module_subcategory", "pathwise_module_completeness","enzyme_hits_in_module")]
   return(df)
 }
 
@@ -119,7 +119,7 @@ get_aggregation <- function(colname1, colname2, df1, df2, name, output){
 }
 
 get_only_multi_genes <- function(df){
-  df$gene_count <- sapply(df$gene_caller_ids_in_module, function(x) {
+  df$gene_count <- sapply(df$enzyme_hits_in_module, function(x) {
     gene_list <- strsplit(x, ",")[[1]]
     return(length(gene_list))
   })
@@ -148,16 +148,81 @@ get_median <-function(df) {
   return(median_cmp_per_family_long)
 }
 
+convert_long <- function(df) {
+  out <- df %>%
+    pivot_longer(cols = c(an_pwc, ma_pwc, ko_pwc), names_to = "type", values_to = "pwc_value")
+  out <- out %>%
+    mutate(module_per_gene = paste(.id, module, sep = "_"))
+  return(out)
+}
+
+plot_module_hist <- function(df, df2) {
+  plots <- list()  
+  for (fam in unique(df$family)) {
+    p <- ggplot() + 
+      # Base layer with semi-transparent bars
+      geom_col(data = df %>% filter(family == fam), 
+               aes(x = reorder(module_per_gene, -pwc_value), y = pwc_value, fill = type), 
+               position = "dodge", width = 1, alpha = 0.3) +
+      # Overlay with fully opaque bars
+      geom_col(data = df2 %>% filter(family == fam), 
+               aes(x = reorder(module_per_gene, -pwc_value), y = pwc_value, fill = type), 
+               position = "dodge", width = 1, alpha = 1) +
+      # Facet grid for type and family
+      facet_grid(type ~ family, 
+                 labeller = labeller(type = c("ko_pwc" = "Kofamscan", 
+                                              "ma_pwc" = "MicrobeAnnotator", 
+                                              "an_pwc" = "Anvio"))) +
+      # Labels and customizations
+      labs(x = "Individual Kegg Module per Genome", y = "Pathwise-Completeness Score", 
+           title = paste(fam)) + 
+      scale_fill_manual(values = c("ko_pwc" = "#e8b437", "ma_pwc" = "#3093CB", "an_pwc" = "#038575"),
+                        labels = c("ko_pwc" = "Kofamscan", "ma_pwc" = "MicrobeAnnotator", "an_pwc" = "anvi'o")) + 
+      theme_minimal() + 
+      theme(
+        legend.position = "none",
+        legend.title = element_blank(),
+        strip.text = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),      
+        axis.text.y = element_text(size = 8),  # Larger y-axis text
+        axis.title.x = element_text(size = 12),  # Larger x-axis title
+        axis.title.y = element_text(size = 12),  # Larger y-axis title
+        plot.title = element_text(size = 12, face = "bold"),  # Larger individual plot titles
+        panel.spacing.y = unit(.1, "line"),
+        panel.spacing.x = unit(.5, "line")
+      )
+    plots[[fam]] <- p
+  }
+  combined_plots <- wrap_plots(plots, ncol = 4, nrow = 3) + 
+    plot_annotation(
+      theme = theme(plot.title = element_text(hjust = 0.5))  # Center the title
+    )
+  combined_plots <- combined_plots + 
+    plot_layout(guides = "collect") & 
+    theme(legend.position = "bottom")  # Position the shared legend at the bottom
+  return(combined_plots)
+}
+
+
+
 # Read in data -----------------------------------------------------------------
-family_linker <- read_family("/Users/user/folder/bac120_metadata_r214.tsv")
-anvio <- format_df(list.files(list.files("/Users/user/folder/unfiltered/anvio/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
-microbeannotator <- format_df(list.files(list.files("/User/suser/folder/unfiltered/microbeAnnotator/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
-kofamscan <- format_df(list.files(list.files("/Users/user/folder/unfiltered/kofamscan/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
+family_linker <- read_family("/Users/kananen/Desktop/Keep_until_anvio_published/bac120_metadata_r214.tsv")
+anvio <- format_df(list.files(list.files("/Users/kananen/Desktop/Keep_until_anvio_published/unfiltered/anvio/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
+microbeannotator <- format_df(list.files(list.files("/Users/kananen/Desktop/Keep_until_anvio_published/unfiltered/microbeAnnotator/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
+kofamscan <- format_df(list.files(list.files("/Users/kananen/Desktop/Keep_until_anvio_published/unfiltered/kofamscan/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
 
 # Take a completeness above .80% for comparisons of more complete pathways
 anvio_80 <- subset(anvio, pathwise_module_completeness >= .80)
 microbeannotator_80 <- subset(microbeannotator, pathwise_module_completeness >= .80)
 kofamscan_80 <- subset(kofamscan, pathwise_module_completeness >= .80)
+
+all_modules_no_filt <- combine_data(anvio[c(".id","module", "family", 
+                                       "module_subcategory", "pathwise_module_completeness")], 
+                            microbeannotator[c(".id","module", "family", 
+                                                  "module_subcategory", "pathwise_module_completeness")], 
+                            kofamscan[c(".id","module", "family", 
+                                           "module_subcategory", "pathwise_module_completeness")])
 
 # Make a combined dataframe for all of the modules for ease of use
 all_modules <- combine_data(anvio_80[c(".id","module", "family", 
@@ -171,102 +236,35 @@ all_modules_multi <- combine_data(get_only_multi_genes(anvio_80),
                                   get_only_multi_genes(microbeannotator_80), 
                                   get_only_multi_genes(kofamscan_80))
 
-# ----------------
-all_modules_diff <- all_modules %>%
-  filter(an_pwc != ma_pwc | an_pwc != ko_pwc | ma_pwc != ko_pwc)
-all_modules_diff_multi <- all_modules_multi %>%
-  filter(an_pwc != ma_pwc | an_pwc != ko_pwc | ma_pwc != ko_pwc)
-
+# generate list of cases when microbeannotator finds something and anvio doesn't
+all_modules_not_in_anvio <- all_modules %>%
+  filter(an_pwc == 0 & ma_pwc != 0)
+multi_modules_not_in_anvio <- all_modules_multi %>%
+  filter(an_pwc == 0 & ma_pwc != 0)
+saveRDS(all_modules_not_in_anvio, "all_modules_not_in_anvio.rds")
+saveRDS(multi_modules_not_in_anvio, "multi_gene_modules_not_in_anvio.rds")
 
 # Convert to long format for plotting
-all_modules_diff_long <- all_modules_diff %>%
-  pivot_longer(cols = c(an_pwc, ma_pwc, ko_pwc), names_to = "type", values_to = "pwc_value")
-all_modules_diff_long <- all_modules_diff_long %>%
-  mutate(module_per_gene = paste(.id, module, sep = "_"))
-all_modules_diff_long_multi <- all_modules_diff_multi %>%
-  pivot_longer(cols = c(an_pwc, ma_pwc, ko_pwc), names_to = "type", values_to = "pwc_value")
-all_modules_diff_long_multi <- all_modules_diff_long_multi %>%
-  mutate(module_per_gene = paste(.id, module, sep = "_"))
+all_modules_diff_long <- convert_long(all_modules)
+all_modules_diff_long_multi <- convert_long(all_modules_multi)
+all_modules_diff_long_no_filt <- convert_long(all_modules_no_filt)
 
-
-# Plot the path-wise completeness per family for all the genomes+modules.
-plots <- list()  
-for(fam in unique(all_modules_diff_long$family)){
-  p <- ggplot(all_modules_diff_long %>% filter(family == fam), 
-              aes(x = reorder(module_per_gene, -pwc_value), y = pwc_value, fill = type)) + 
-    geom_col(position = "dodge", width = 1) +
-    facet_grid(type ~ family, 
-               labeller = labeller(type = c("ko_pwc" = "Kofamscan", 
-                                            "ma_pwc" = "MicrobeAnnotator", 
-                                            "an_pwc" = "Anvio"))) +  # Rename facet labels
-    labs(x = "Individual Kegg Module per Genome", y = "Pathwise-Completeness Score", 
-         title = NULL) + 
-    scale_fill_manual(values = c("ko_pwc" = "#e8b437", "ma_pwc" = "#3093CB", "an_pwc" = "#038575"),
-                      labels = c("ko_pwc" = "Kofamscan", "ma_pwc" = "MicrobeAnnotator", "an_pwc" = "anvi'o")) + 
-    theme_minimal() + 
-    theme(
-      legend.position = "none",
-      legend.title = element_blank(),
-      axis.text.x = element_blank(),
-      axis.ticks.x = element_blank(),
-      panel.spacing.y = unit(.1, "line"),
-      panel.spacing.x = unit(.5, "line")
-    )
-  plots[[fam]] <- p
-}
-combined_plot <- wrap_plots(plots, ncol = 4, nrow = 3) + 
+# Plot histogram distribution of the pathwise-completeness
+combined_plot_A <- plot_module_hist(all_modules_diff_long_no_filt, all_modules_diff_long)
+combined_plot_B <- plot_module_hist(all_modules_diff_long_no_filt, all_modules_diff_long_multi)
+combined_plot <- (wrap_elements(combined_plot_A) / wrap_elements(combined_plot_B)) + 
   plot_annotation(
-    title = "Pathwise-Completeness for All Modules Across Genomes",
-    theme = theme(plot.title = element_text(hjust = 0.5))  # Center the title
+    title = "Pathwise-Completeness for All Modules Across All Genomes",
+    tag_levels = "A", 
+    theme = theme(
+      plot.title = element_text(size = 18, face = "bold")
+    )
   )
 
-pdf(file="Sf5.pdf", width=15, height=20)
+pdf(file="Sf5ab.pdf", width=15, height=20)
 combined_plot
 dev.off()
-ggsave("Sf5.png", combined_plot, width = 15, height = 8, dpi = 300)  # Adjust width, height, and dpi as needed
-
-
-plots <- list()  
-for(fam in unique(all_modules_diff_long_multi$family)){
-  p <- ggplot(all_modules_diff_long_multi %>% filter(family == fam), 
-              aes(x = reorder(module_per_gene, -pwc_value), y = pwc_value, fill = type)) + 
-    geom_col(position = "dodge", width = 1) +
-    facet_grid(type ~ family, 
-               labeller = labeller(type = c("ko_pwc" = "Kofamscan", 
-                                            "ma_pwc" = "MicrobeAnnotator", 
-                                            "an_pwc" = "Anvio"))) +  # Rename facet labels
-    labs(x = "Individual Kegg Module per Genome", y = "Pathwise-Completeness Score", 
-         title = NULL) + 
-    scale_fill_manual(values = c("ko_pwc" = "#e8b437", "ma_pwc" = "#3093CB", "an_pwc" = "#038575"),
-                      labels = c("ko_pwc" = "Kofamscan", "ma_pwc" = "MicrobeAnnotator", "an_pwc" = "anvi'o")) + 
-    theme_minimal() + 
-    theme(
-      legend.position = "none",
-      legend.title = element_blank(),
-      axis.text.x = element_blank(),
-      axis.ticks.x = element_blank(),
-      panel.spacing.y = unit(.1, "line"),
-      panel.spacing.x = unit(.5, "line")
-    )
-  plots[[fam]] <- p
-}
-combined_plot <- wrap_plots(plots, ncol = 4, nrow = 3) + 
-  plot_annotation(
-    title = "Pathwise-Completeness for All Modules Across Genomes",
-    theme = theme(plot.title = element_text(hjust = 0.5))  # Center the title
-  )
-
-pdf(file="Sf6.pdf", width=15, height=20)
-combined_plot
-dev.off()
-ggsave("Sf6.png", combined_plot, width = 15, height = 8, dpi = 300)  # Adjust width, height, and dpi as needed
-
-# -----------------
-
-
-
-
-
+ggsave("Sf5ab.png", combined_plot, width = 15, height = 20, dpi = 300)  # Adjust width, height, and dpi as needed
 
 # Write out to an intermediate file
 write_tsv(all_modules, file = "all_completeness_all_tools.csv")
