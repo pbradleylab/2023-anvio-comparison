@@ -150,31 +150,49 @@ get_median <-function(df) {
 
 convert_long <- function(df) {
   out <- df %>%
-    pivot_longer(cols = c(an_pwc, ma_pwc, ko_pwc), names_to = "type", values_to = "pwc_value")
-  out <- out %>%
-    mutate(module_per_gene = paste(.id, module, sep = "_"))
+    pivot_longer(cols = c(an_pwc, ma_pwc, ko_pwc), names_to = "type", values_to = "pwc_value") %>%
+    mutate(module_per_gene = paste(.id, module, sep = "_")) %>%
+    mutate(module_per_gene_ordered = factor(
+      module_per_gene,
+      levels = module_per_gene[type == "an_pwc"][order(-pwc_value[type == "an_pwc"])]
+    ))
   return(out)
 }
 
 plot_module_hist <- function(df, df2) {
-  plots <- list()  
+  plots <- list()
+  
   for (fam in unique(df$family)) {
+    # Reorder the module_per_gene for both df and df2 based on an_pwc
+    df <- df %>%
+      mutate(module_per_gene_ordered = factor(
+        module_per_gene,
+        levels = module_per_gene[type == "an_pwc"][order(-pwc_value[type == "an_pwc"])]
+      ))
+    
+    df2 <- df2 %>%
+      mutate(module_per_gene_ordered = factor(
+        module_per_gene,
+        levels = module_per_gene[type == "an_pwc"][order(-pwc_value[type == "an_pwc"])]
+      ))
+    
     p <- ggplot() + 
       # Base layer with semi-transparent bars
       geom_col(data = df %>% filter(family == fam), 
-               aes(x = reorder(module_per_gene, -pwc_value), y = pwc_value, fill = type), 
+               aes(x = module_per_gene_ordered, y = pwc_value, fill = type), 
                position = "dodge", width = 1, alpha = 0.3) +
       # Overlay with fully opaque bars
       geom_col(data = df2 %>% filter(family == fam), 
-               aes(x = reorder(module_per_gene, -pwc_value), y = pwc_value, fill = type), 
+               aes(x = module_per_gene_ordered, y = pwc_value, fill = type), 
                position = "dodge", width = 1, alpha = 1) +
       # Facet grid for type and family
       facet_grid(type ~ family, 
                  labeller = labeller(type = c("ko_pwc" = "Kofamscan", 
                                               "ma_pwc" = "MicrobeAnnotator", 
                                               "an_pwc" = "Anvio"))) +
+      
       # Labels and customizations
-      labs(x = "Individual Kegg Module per Genome", y = "Pathwise-Completeness Score", 
+      labs(x = "Individual Kegg Module per Genome", y = "Per-Pathwise-Completeness Score", 
            title = paste(fam)) + 
       scale_fill_manual(values = c("ko_pwc" = "#e8b437", "ma_pwc" = "#3093CB", "an_pwc" = "#038575"),
                         labels = c("ko_pwc" = "Kofamscan", "ma_pwc" = "MicrobeAnnotator", "an_pwc" = "anvi'o")) + 
@@ -192,8 +210,10 @@ plot_module_hist <- function(df, df2) {
         panel.spacing.y = unit(.1, "line"),
         panel.spacing.x = unit(.5, "line")
       )
+    
     plots[[fam]] <- p
   }
+  
   combined_plots <- wrap_plots(plots, ncol = 4, nrow = 3) + 
     plot_annotation(
       theme = theme(plot.title = element_text(hjust = 0.5))  # Center the title
@@ -205,9 +225,8 @@ plot_module_hist <- function(df, df2) {
 }
 
 
-
 # Read in data -----------------------------------------------------------------
-family_linker <- read_family("/Users/kananen/Desktop/Keep_until_anvio_published/bac120_metadata_r214.tsv")
+family_linker <- read_family("/Users/user/folder/bac120_metadata_r214.tsv")
 anvio <- format_df(list.files(list.files("/Users/user/folder/unfiltered/anvio/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
 microbeannotator <- format_df(list.files(list.files("/Users/user/folder/unfiltered/microbeAnnotator/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
 kofamscan <- format_df(list.files(list.files("/Users/user/folder/unfiltered/kofamscan/metabolism/default/", full.names = TRUE), full.names = TRUE), family_linker)
@@ -298,7 +317,10 @@ sf1 <- median_cmp %>%
        y = "Module Completeness (other method)", 
        color = "Method")
 
-
+pdf(file="Sf1.pdf", width=15, height=15)
+sf1
+dev.off()
+ggsave("Sf1.png", sf1, width = 15, height = 15, dpi = 300)  # Adjust width, height, and dpi as needed
 
 
 # Calculate difference in modules found for anvio vs kofamscan and anvio vs
@@ -315,6 +337,17 @@ modules <- unique(anvio[c(".id")])
 modules <- get_aggregation("modules","modules", anvio_80, microbeannotator_80, "anvio_increase_microbeannotator", modules)
 modules$anvio_increase_microbeannotator <- ((modules$colname1.Freq+1)-(modules$colname2.Freq+1))/(modules$colname2.Freq+1)
 print(paste("Number of unique modules change percent in of anvio over microbeannotator:", sum(modules$anvio_increase_microbeannotator)/nrow(modules)))
+
+# Anvio vs Kofamscan
+modules <- unique(anvio[c(".id")])
+modules <- get_aggregation("modules","modules", anvio_80, kofamscan_80, "anvio_increase_kofamscan", modules)
+modules$anvio_increase_kofamscan <- ((modules$colname1.Freq+1)-(modules$colname2.Freq+1))/(modules$colname2.Freq+1)
+print(paste("Number of unique modules change percent in of anvio over kofamscan (multi):", sum(modules$anvio_increase_kofamscan)/nrow(modules)))
+# Anvio vs microbeannotator
+modules <- unique(anvio[c(".id")])
+modules <- get_aggregation("modules","modules", anvio_80, microbeannotator_80, "anvio_increase_microbeannotator", modules)
+modules$anvio_increase_microbeannotator <- ((modules$colname1.Freq+1)-(modules$colname2.Freq+1))/(modules$colname2.Freq+1)
+print(paste("Number of unique modules change percent in of anvio over microbeannotator (multi):", sum(modules$anvio_increase_microbeannotator)/nrow(modules)))
 
 # Calculate 20 most dissimilar rows accross the tools
 #
