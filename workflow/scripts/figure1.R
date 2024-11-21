@@ -225,6 +225,23 @@ names(stats)[names(stats) == 'colname1.Freq'] <- 'anst'
 stats <- merge(stats, get_aggregation("anst_valid","anra_valid", eggnog_anst, eggnog_anra, "anst_increase_anra_valid", stats)[c(".id","colname1.Freq")], all=TRUE)
 names(stats)[names(stats) == 'colname1.Freq'] <- 'anst_valid'
 
+mara_no_kora <- kora_sub
+mara_no_kora$V12 <- kora_sub$kora
+mara_no_kora$mara <- kora_sub$kora
+# MicrobeAnnotator and eggnog but not kofamscan
+only_mara_valid_num <- nrow(anti_join(eggnog_mara, mara_no_kora, by = c(".id", "V12")))
+# MicrobeAnnotator not kofamscan
+only_mara_valid_den <- nrow(anti_join(mara_sub, mara_no_kora, by = c(".id", "mara")))
+
+
+kora_stat <- nrow(eggnog_kora)/nrow(kora_sub)
+anra_stat <- (nrow(eggnog_anra) - nrow(eggnog_kora)) / (nrow(anra_sub) - nrow(kora_sub))
+mara_stat <- (nrow(eggnog_mara) - nrow(eggnog_kora)) / (nrow(mara_sub) - nrow(kora_sub))
+
+print(paste("mara only (no kora) validated with eggnog:", mara_stat))
+print(paste("anra only (no kora) validated with eggnog:", anra_stat))
+
+
 # Calculate the average for each increase or decrease
 print(paste("anra increase from annr:", sum(stats$anra_increase_annr)/nrow(stats)))
 print(paste("anra min increase from annr:", min(stats$anra_increase_annr)))
@@ -240,13 +257,13 @@ print(paste("kore increase from kora valid:", sum(stats$kore_increase_kora_valid
 print(paste("total number of ORFs:", sum(stats$num_ORFs)))
 print(paste("total number of KO found with kofamscan:", sum(stats$kora_valid)))
 print(paste("Percent KO annotated:", sum(stats$kora)/sum(stats$num_ORFs)))
-print(paste("Percent KO validated:", sum(stats$kora_valid)/sum(stats$num_ORFs)))
+print(paste("Percent KO validated:", sum(stats$kora_valid)/sum(stats$kora)))
 print(paste("total number of KO found with microbeannotator:", sum(stats$mara_valid)))
 print(paste("Percent KO annotated:", sum(stats$mara)/sum(stats$num_ORFs)))
-print(paste("Percent KO validated:", sum(stats$mara_valid)/sum(stats$num_ORFs)))
+print(paste("Percent KO validated:", sum(stats$mara_valid)/sum(stats$mara)))
 print(paste("total number of KO found with anvio:", sum(stats$anra_valid)))
 print(paste("Percent KO annotated:", sum(stats$anra)/sum(stats$num_ORFs)))
-print(paste("Percent KO validated:", sum(stats$anra_valid)/sum(stats$num_ORFs)))
+print(paste("Percent KO validated:", sum(stats$anra_valid)/sum(stats$anra)))
 
 # Calculate the percent increase or decrease between tools
 print(paste("Percent KO annotated in MicrobeAnnotator over Kofamscan:", sum((stats$mara-stats$kora)/stats$kora)/nrow(stats)))
@@ -355,6 +372,7 @@ all_tools <- all_tools %>%
   group_by_at(vars(".id", "V1")) %>%
   filter(check_not_ko(mara, kora)) %>%
   ungroup()
+
 tool_comparison <- merge(tool_comparison, aggregate(mara ~ .id, data = all_tools, FUN = function(x) length(x)), by=".id", all=TRUE)
 tool_comparison[is.na(tool_comparison)] <- 0
 
