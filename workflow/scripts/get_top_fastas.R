@@ -8,7 +8,7 @@ library(argparser, quietly=TRUE)
 
 p <- arg_parser("Get fasta sequences listed in a .csv file")
 p <- add_argument(p, "--input", help="input file", type="character", short="-i", default="results/top_20_anvio_lachnos_accessions.csv")
-p <- add_argument(p, "--outdir", help="output directory", type="character", short="-o", default="results/top_fasta")
+p <- add_argument(p, "--outdir", help="output directory", type="character", short="-o", default="results/alignments/top_fasta")
 p <- add_argument(p, "--seqdir", help="directory to search for protein sequences", default="results/annotation/anvio/get_sequences_for_gene_calls/", short="-s")
 
 # Parse the command line arguments

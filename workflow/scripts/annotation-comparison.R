@@ -23,6 +23,8 @@ library(ape)
 library(phytools)
 map <- purrr::map
 
+
+
 ### MISC FUNCTIONS/DEFINITIONS
 
 tbl_to_mtx <- function(x) {
@@ -63,6 +65,7 @@ ko_tsv <- read_tsv("ko.tsv",
 anvio_dir <- "../../results/annotations/anvio/default/"
 ma_dir <- "../../results/annotations/microbeannotator/default/"
 kfs_dir <- "../../results//annotations/kofamscan/default/"
+results_path <- "../../results/"
 
 kfs_tsvs <- list.files(kfs_dir, "*tsv")
 
@@ -599,27 +602,19 @@ aln_annotations <- anvio_vs_kfs_bitscore  %>%
   mutate(d_combo = paste(d_family, d_above, d_bitscore, sep="-")) %>%
   relocate(name)
 
-write_tsv(aln_annotations %>% select(name, annotation=d_family),
-          "aln_annotation_family.tsv")
-write_tsv(aln_annotations %>% select(name, annotation=d_bitscore),
-          "aln_annotation_bitscore.tsv")
-write_tsv(aln_annotations %>% select(name, annotation=d_above),
-          "aln_annotation_above.tsv")
-write_tsv(aln_annotations %>% select(name, annotation=d_combo),
-          "aln_annotation_combo.tsv")
 write_tsv(aln_annotations %>% select(name, d_family:d_combo),
           "aln_annotation_file.tsv")
 
 # look at alignments
 
-all_aln_files <- list.files("alignments/all_trim/", pattern = "aln$")
-all_alns <- lapply(file.path("alignments/all_trim/", all_aln_files),
+all_aln_files <- list.files(file.path(results_path, "alignments/all_trim/"), pattern = "aln$")
+all_alns <- lapply(file.path(results_path, "alignments/all_trim/", all_aln_files),
                    \(.) Biostrings::readAAMultipleAlignment(filepath=.,
                                                             format="fasta"))
 names(all_alns) <- gsub("\\-trim.aln", "", all_aln_files)
 
-lachno_aln_files <- list.files("alignments/top_fasta/", pattern = "aln$")
-lachno_alns <- lapply(file.path("alignments/top_fasta//", lachno_aln_files),
+lachno_aln_files <- list.files(file.path(results_path, "alignments/top_fasta/"), pattern = "aln$")
+lachno_alns <- lapply(file.path(results_path, "alignments/top_fasta//", lachno_aln_files),
                       \(.) Biostrings::readAAMultipleAlignment(filepath=.,
                                                                format="fasta"))
 names(lachno_alns) <- gsub("\\.aln", "", lachno_aln_files)
@@ -672,7 +667,7 @@ cddids <- read_tsv("cddid_all.tbl.gz",
 
 K01647_which_cdds <- cdr_data$K01647 %>% count(sseqid) %>% arrange(-n)
 print(K01647_which_cdds)
-K01647_seqs <- read.FASTA("./alignments/top_fasta/K01647.faa", type="AA")
+K01647_seqs <- read.FASTA(file.path(results_path, "alignments/top_fasta/K01647.faa"), type="AA")
 K01647_which_prk <- filter(cdr_data$K01647, sseqid=="CDD:184465")$qseqid
 K01647_prks <- filter(cdr_data$K01647, sseqid=="CDD:184465")$qseqid
 K01647_citls <- filter(cdr_data$K01647, sseqid=="CDD:99866")$qseqid
@@ -690,7 +685,7 @@ print(cd_res$K01647 %>%
 
 K02495_which_cdds <- cdr_data$K02495 %>% count(sseqid) %>% arrange(-n)
 print(K02495_which_cdds)
-K02495_seqs <- read.FASTA("./alignments/top_fasta/K02495.faa", type="AA")
+K02495_seqs <- read.FASTA(file.path(results_path, "./alignments/top_fasta/K02495.faa"), type="AA")
 K02495_seq_ids <- map(K02495_which_cdds$sseqid, \(cdd) {
   return(dplyr::filter(cdr_data$K02495, sseqid==cdd)$qseqid)
 })
@@ -918,13 +913,13 @@ write_csv(file="butyr_g.csv",
 ## After running alignments, etc., proceed:
 
 # Butyrate example
-buty_aln_files <- list.files("alignments/butyrate/aln/", pattern = "aln$")
-buty_alns <- lapply(file.path("alignments/butyrate/aln/", buty_aln_files),
+buty_aln_files <- list.files(file.path(results_path, "alignments/butyrate/aln/"), pattern = "aln$")
+buty_alns <- lapply(file.path(results_path, "alignments/butyrate/aln/", buty_aln_files),
                     \(.) Biostrings::readAAMultipleAlignment(filepath=.,
                                                              format="fasta"))
 names(buty_alns) <- gsub("\\.aln", "", buty_aln_files)
 
-buty_cdd_files <- list.files("alignments/butyrate/cdd//", pattern = "txt$")
+buty_cdd_files <- list.files(file.path(results_path, "alignments/butyrate/cdd//"), pattern = "txt$")
 buty_cdd <- lapply(file.path("alignments/butyrate/cdd/", buty_cdd_files),
                     \(.) read_tsv(file.path(.), col_names = blast6_header,
                                   col_types=blast6_types))
@@ -935,7 +930,7 @@ buty_cdr <- map(buty_cdd, function(cdr) {
     ungroup()
 })
 
-buty_tree_files <- list.files("alignments/butyrate/tree//", pattern = "tree$")
+buty_tree_files <- list.files(file.path(results_path, "alignments/butyrate/tree//"), pattern = "tree$")
 buty_trees <- lapply(file.path("alignments/butyrate/tree/", buty_tree_files),
                      read.tree)
 names(buty_trees) <- gsub("\\.tree", "", buty_tree_files)
@@ -967,11 +962,11 @@ viz_msas_L2_sg <- map2(viz_Ltrees_sg, lachno_alns[names(viz_Ltrees)], ~
                          alt_viz_tree(.x, .y, mask_frac = 0.75))
 
 glutacon_plus <- Biostrings::readAAMultipleAlignment(
-  filepath="alignments/butyrate_test/glutaconyl-K23351.aln", format="fasta")
+  filepath=file.path(results_path, "alignments/butyrate_test/glutaconyl-K23351.aln"), format="fasta")
 glutacon_aln <- glutacon_plus
 names(glutacon_aln@unmasked) <- map_chr(
   labels(glutacon_aln@unmasked), ~ gsub("([^ ]*) .*", "\\1", .x))
-glutacon_tree <- read.tree("alignments/butyrate_test/glutaconyl-K23351.tree")
+glutacon_tree <- read.tree(file.path(results_path, "alignments/butyrate_test/glutaconyl-K23351.tree"))
 
 pdf("glutacon.pdf")
 make_viz_cd_tree_2(midpoint.root(glutacon_tree),
@@ -1016,15 +1011,15 @@ write_csv(file="ma_carb_g.csv",
             arrange(accession,genome,gene_callers_id))
 
 # After running alignments, proceed:
-carb_tree_files <- list.files("alignments/carbapenem/tree//", pattern = "tree$")
-carb_trees <- lapply(file.path("alignments/carbapenem/tree/", carb_tree_files), read.tree)
+carb_tree_files <- list.files(file.path(results_path, "alignments/carbapenem/tree//"), pattern = "tree$")
+carb_trees <- lapply(file.path(results_path, "alignments/carbapenem/tree/", carb_tree_files), read.tree)
 names(carb_trees) <- gsub("\\.tree", "", carb_tree_files)
 
-carbapenem_aln <- Biostrings::readAAMultipleAlignment(filepath="alignments/carbapenem/aln/K19099.aln", format="fasta")
-carbapenem_tree <- read.tree("alignments/carbapenem/tree/K19099.tree")
+carbapenem_aln <- Biostrings::readAAMultipleAlignment(filepath=file.path(results_path, "alignments/carbapenem/aln/K19099.aln"), format="fasta")
+carbapenem_tree <- read.tree(file.path(results_path, "alignments/carbapenem/tree/K19099.tree"))
 
-carb_cdd_files <- list.files("alignments/carbapenem//cdd//", pattern = "txt$")
-carb_cdd <- lapply(file.path("alignments/carbapenem//cdd/", carb_cdd_files),
+carb_cdd_files <- list.files(file.path(results_path, "alignments/carbapenem//cdd//"), pattern = "txt$")
+carb_cdd <- lapply(file.path(results_path, "alignments/carbapenem//cdd/", carb_cdd_files),
                    \(.) read_tsv(file.path(.), col_names = blast6_header, col_types=blast6_types))
 names(carb_cdd) <- gsub("\\.txt", "", carb_cdd_files)
 carb_cdr <- map(carb_cdd, function(cdr) {
@@ -1048,12 +1043,12 @@ make_viz_cd_tree_2(midpoint.root(carbapenem_tree), "K19099",
   alt_viz_tree(., carbapenem_aln, mask_frac=1) & theme(legend.position="bottom")
 
 gim_plus <- Biostrings::readAAMultipleAlignment(
-  filepath="alignments/carb_test/GIM-K19099.aln",
+  filepath=file.path(results_path, "alignments/carb_test/GIM-K19099.aln"),
   format="fasta")
 gim_aln <- gim_plus
 names(gim_aln@unmasked) <- map_chr(
   labels(gim_aln@unmasked), ~ gsub("([^ ]*) .*", "\\1", .x))
-gim_tree <- read.tree("alignments/carb_test/GIM-K19099.tree")
+gim_tree <- read.tree(file.path(results_path, "alignments/carb_test/GIM-K19099.tree"))
 
 pdf("gim.pdf")
 (make_viz_cd_tree_2(midpoint.root(gim_tree),
